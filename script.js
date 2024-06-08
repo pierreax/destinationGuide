@@ -9,7 +9,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         month: formData.get('month')
     };
 
-    fetch('https://flightwebsiteapp.azurewebsites.net/api/Destinations?code=Klk7h6hTV10eit9wstlDC2n8mYARisNt9pE61-bXpA9vAzFuxoe4Rw%3D%3D', {
+    fetch('https://flightwebsiteapp.azurewebsites.net/api/Destinations', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
