@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Destination Picker</title>
     <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
 </head>
 <body>
     <h1>Destination Picker</h1>
@@ -51,20 +52,5 @@
 
     <h2>Additional Information:</h2>
     <div id="fullResponse"></div>
-
-    <script>
-        document.getElementById('destinationForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            fetch('/suggest-destination', {
-                method: 'POST',
-                body: new FormData(event.target)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('suggestion').innerText = data.suggestion;
-                document.getElementById('fullResponse').innerText = data.full_response;
-            });
-        });
-    </script>
 </body>
 </html>
