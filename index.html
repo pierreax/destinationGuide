@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Destination Picker</title>
-    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Destination Picker</h1>
     <h2>Enter your travel preferences and get a suggestion for a travel destination.</h2>
-    <form id="destinationForm" method="POST" action="/suggest-destination">
+    <form id="destinationForm">
         <div class="form-group">
             <label for="destination_type">Destination Type:</label>
             <select id="destination_type" name="destination_type" required>
@@ -44,10 +44,12 @@
         <div>
             <button type="submit">Get Suggestion</button>
         </div>
-        <div class="suggestion-container">
-            <span id="suggestion" class="suggestion"></span>
-        </div>
     </form>
+
+    <div class="suggestion-container">
+        <span class="suggestion-label">Suggested Destination:</span>
+        <span id="suggestion" class="suggestion"></span>
+    </div>
 
     <h2>Additional Information:</h2>
     <div id="fullResponse"></div>

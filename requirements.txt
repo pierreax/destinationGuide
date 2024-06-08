@@ -1,0 +1,4 @@
+Flask
+azure-functions
+openai
+os
