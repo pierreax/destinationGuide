@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Destination Picker</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Destination Picker</h1>
+    <h2>Enter your travel preferences and get a suggestion for a travel destination.</h2>
+    <form id="destinationForm" method="POST" action="/suggest-destination">
+        <div class="form-group">
+            <label for="destination_type">Destination Type:</label>
+            <select id="destination_type" name="destination_type" required>
+                <option value="beach">Beach</option>
+                <option value="city">City</option>
+                <option value="mountain">Mountain</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="activity">Activities:</label>
+            <input type="text" id="activity" name="activity" required>
+        </div>
+        <div class="form-group">
+            <label for="climate">Climate:</label>
+            <select id="climate" name="climate" required>
+                <option value="warm">Warm</option>
+                <option value="cool">Cool</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="budget">Budget:</label>
+            <select id="budget" name="budget" required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="month">Month:</label>
+            <input type="text" id="month" name="month" required>
+        </div>
+        <div>
+            <button type="submit">Get Suggestion</button>
+        </div>
+        <div class="suggestion-container">
+            <span id="suggestion" class="suggestion"></span>
+        </div>
+    </form>
+
+    <h2>Additional Information:</h2>
+    <div id="fullResponse"></div>
+
+    <script>
+        document.getElementById('destinationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetch('/suggest-destination', {
+                method: 'POST',
+                body: new FormData(event.target)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('suggestion').innerText = data.suggestion;
+                document.getElementById('fullResponse').innerText = data.full_response;
+            });
+        });
+    </script>
+</body>
+</html>
