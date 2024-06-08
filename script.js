@@ -16,10 +16,27 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         },
         body: JSON.stringify(preferences)
     })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('suggestion').innerText = data.suggestion;
-        document.getElementById('fullResponse').innerText = data.full_response;
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.text(); // Get the raw response text
     })
-    .catch(error => console.error('Error:', error));
+    .then(text => {
+        try {
+            const data = JSON.parse(text); // Attempt to parse the JSON
+            document.getElementById('suggestion').innerText = data.suggestion;
+            document.getElementById('fullResponse').innerText = data.full_response;
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+            console.error('Response text was:', text);
+            document.getElementById('suggestion').innerText = 'Error fetching suggestion';
+            document.getElementById('fullResponse').innerText = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('suggestion').innerText = 'Error fetching suggestion';
+        document.getElementById('fullResponse').innerText = '';
+    });
 });
