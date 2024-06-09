@@ -37,29 +37,21 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
             loader.style.display = 'none'; // Hide the loader if validation fails
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
-        return response.text(); // Get the raw response text
+        return response.json(); // Get the JSON response
     })
-    .then(text => {
+    .then(data => {
         loader.style.display = 'none'; // Hide the loader
-        console.log('Response text:', text); // Logging response text
 
-        try {
-            const data = JSON.parse(text); // Attempt to parse the JSON
-            
-            if (!previousSuggestions.includes(data.suggestion)) {
-                previousSuggestions.push(data.suggestion);
-                sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
+        console.log('Response data:', data); // Logging response data
+        
+        if (!previousSuggestions.includes(data.suggestion)) {
+            previousSuggestions.push(data.suggestion);
+            sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
-                document.getElementById('suggestion').innerText = data.suggestion;
-                document.getElementById('fullResponse').innerText = data.full_response;
-            } else {
-                document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
-                document.getElementById('fullResponse').innerText = '';
-            }
-        } catch (error) {
-            console.error('Error parsing JSON:', error);
-            console.error('Response text was:', text);
-            document.getElementById('suggestion').innerText = 'Error fetching suggestion';
+            document.getElementById('suggestion').innerText = data.suggestion;
+            document.getElementById('fullResponse').innerText = data.full_response;
+        } else {
+            document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
             document.getElementById('fullResponse').innerText = '';
         }
     })
