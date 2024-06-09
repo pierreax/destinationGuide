@@ -69,7 +69,6 @@ input, select {
     border: 1px solid var(--border-color);
     background: var(--background-color);
     font-family: 'Avenir Light', sans-serif;
-    -webkit-appearance: none;
 }
   
 /* Submit button styles */
@@ -109,7 +108,6 @@ button[type="submit"]:active {
     color: var(--text-color);
     padding: 10px;
 }
-
 
 /* Loader animation styles */
 .loader {
