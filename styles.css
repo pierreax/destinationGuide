@@ -73,21 +73,25 @@ input, select {
     font-size: 16px;
 }
 
-input::placeholder, select::placeholder {
+label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    background: var(--input-background);
+    padding: 0 5px;
     color: var(--text-color);
-    opacity: 0.7;
+    font-size: 16px;
+    pointer-events: none;
+    transition: all 0.2s ease-out;
 }
 
-input:focus::placeholder, select:focus::placeholder {
-    opacity: 0;
-}
-
-select:focus option:first-child {
-    display: none;
-}
-
-select option {
-    color: black;
+input:focus + label, select:focus + label,
+input:not(:placeholder-shown) + label, select:not([value=""]) + label {
+    top: 0;
+    left: 10px;
+    font-size: 12px;
+    color: var(--text-color);
 }
 
 /* Submit button styles */

@@ -1,3 +1,23 @@
+document.addEventListener('DOMContentLoaded', function() {
+    var inputs = document.querySelectorAll('input, select');
+    inputs.forEach(function(input) {
+        input.addEventListener('focus', function() {
+            input.previousElementSibling.classList.add('active');
+        });
+
+        input.addEventListener('blur', function() {
+            if (!input.value) {
+                input.previousElementSibling.classList.remove('active');
+            }
+        });
+
+        // Initial check to float label if input has value
+        if (input.value) {
+            input.previousElementSibling.classList.add('active');
+        }
+    });
+});
+
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
     event.preventDefault();
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
