@@ -1,6 +1,6 @@
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
-    $('.loader').show(); // Show the loader
     event.preventDefault();
+    document.getElementById('loader').style.display = 'block'; // Show the loader
     const formData = new FormData(event.target);
     const preferences = {
         destination_type: formData.get('destination_type'),
@@ -19,13 +19,13 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     })
     .then(response => {
         if (!response.ok) {
-            $('.loader').hide(); // Hide the loader if validation fails
+            document.getElementById('loader').style.display = 'none'; // Hide the loader if validation fails
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
-        $('.loader').hide(); // Hide the loader
         return response.text(); // Get the raw response text
     })
     .then(text => {
+        document.getElementById('loader').style.display = 'none'; // Hide the loader
         try {
             const data = JSON.parse(text); // Attempt to parse the JSON
             document.getElementById('suggestion').innerText = data.suggestion;
@@ -38,6 +38,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         }
     })
     .catch(error => {
+        document.getElementById('loader').style.display = 'none'; // Hide the loader
         console.error('Error:', error);
         document.getElementById('suggestion').innerText = 'Error fetching suggestion';
         document.getElementById('fullResponse').innerText = '';
