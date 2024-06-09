@@ -1,6 +1,6 @@
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
     event.preventDefault();
-    console.log('Form submitted!'); // Logging to check if the event listener is triggered
+    console.log('Form submitted'); // Logging to check if the event listener is triggered
 
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
@@ -16,12 +16,19 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
 
     console.log('Preferences:', preferences); // Logging preferences
 
+    let previousSuggestions = JSON.parse(sessionStorage.getItem('previousSuggestions')) || [];
+    
+    const requestBody = {
+        preferences: preferences,
+        previousSuggestions: previousSuggestions
+    };
+
     fetch('https://flightwebsiteapp.azurewebsites.net/api/Destinations?code=Klk7h6hTV10eit9wstlDC2n8mYARisNt9pE61-bXpA9vAzFuxoe4Rw%3D%3D', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(preferences)
+        body: JSON.stringify(requestBody)
     })
     .then(response => {
         if (!response.ok) {
@@ -36,8 +43,17 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
 
         try {
             const data = JSON.parse(text); // Attempt to parse the JSON
-            document.getElementById('suggestion').innerText = data.suggestion;
-            document.getElementById('fullResponse').innerText = data.full_response;
+            
+            if (!previousSuggestions.includes(data.suggestion)) {
+                previousSuggestions.push(data.suggestion);
+                sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
+
+                document.getElementById('suggestion').innerText = data.suggestion;
+                document.getElementById('fullResponse').innerText = data.full_response;
+            } else {
+                document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
+                document.getElementById('fullResponse').innerText = '';
+            }
         } catch (error) {
             console.error('Error parsing JSON:', error);
             console.error('Response text was:', text);
