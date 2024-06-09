@@ -22,6 +22,10 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     event.preventDefault();
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
 
+    // Clear previous suggestions and full response
+    document.getElementById('suggestion').innerText = '';
+    document.getElementById('fullResponse').innerText = '';
+
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
 
@@ -45,7 +49,8 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
 
     console.log('Request Body:', requestBody); // Logging the request body
 
-    fetch('https://flightwebsiteapp.azurewebsites.net/api/Destinations?code=Klk7h6hTV10eit9wstlDC2n8mYARisNt9pE61-bXpA9vAzFuxoe4Rw%3D%3D', {
+    // First request to get city and country
+    fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsCityCountry?code=_7ndc8Y-t5DFhdw0iljB1u5aKl6Y-R4M_WgOB_pXMxL5AzFuJm_40Q%3D%3D', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -60,20 +65,48 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         return response.json(); // Get the JSON response
     })
     .then(data => {
-        loader.style.display = 'none'; // Hide the loader
-
-        console.log('Response data:', data); // Logging response data
+        console.log('Initial Response data:', data); // Logging initial response data
         
         if (!previousSuggestions.includes(data.suggestion)) {
             previousSuggestions.push(data.suggestion);
             sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
             document.getElementById('suggestion').innerText = data.suggestion;
-            document.getElementById('fullResponse').innerText = data.full_response;
+
+            // Follow-up request for full explanation
+            const followUpRequestBody = {
+                cityCountry: data.suggestion,
+                preferences: preferences
+            };
+
+            return fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsFullExplanation?code=rAK_wIArJb_VelW8sVILecWGSD8oFj-mdhaKljLtLedLAzFukWLJ6A%3D%3D', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(followUpRequestBody)
+            });
         } else {
             document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
             document.getElementById('fullResponse').innerText = '';
+            loader.style.display = 'none'; // Hide the loader
+            return null;
         }
+    })
+    .then(response => {
+        if (response) {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data) {
+            console.log('Follow-up Response data:', data); // Logging follow-up response data
+            document.getElementById('fullResponse').innerText = data.full_response;
+        }
+        loader.style.display = 'none'; // Hide the loader
     })
     .catch(error => {
         loader.style.display = 'none'; // Hide the loader
