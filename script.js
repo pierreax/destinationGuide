@@ -77,15 +77,12 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     })
     .then(data => {
         console.log('Initial Response data:', data); // Logging initial response data
-        
-        // Extract only the city and country
-        const cityCountry = data.suggestion.split('.')[0].trim();
 
-        if (!previousSuggestions.includes(cityCountry)) {
-            previousSuggestions.push(cityCountry);
+        if (!previousSuggestions.includes(data.suggestion)) {
+            previousSuggestions.push(data.suggestion);
             sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
-            document.getElementById('suggestion').innerText = cityCountry;
+            document.getElementById('suggestion').innerText = data.suggestion;
             loader.style.display = 'none'; // Hide the loader
 
             // Change button text after displaying city and country
@@ -97,7 +94,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
 
             // Follow-up request for full explanation
             const followUpRequestBody = {
-                cityCountry: cityCountry,
+                cityCountry: data.suggestion,
                 preferences: preferences
             };
 
