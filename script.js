@@ -1,6 +1,6 @@
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
     event.preventDefault();
-    console.log('Form submitted'); // Logging to check if the event listener is triggered
+    console.log('Form submitted!'); // Logging to check if the event listener is triggered
 
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
