@@ -13,36 +13,35 @@
     <form id="destinationForm">
         <div class="loader" id="loader"></div> <!-- Loader added here -->
         <div class="form-group">
-            <label for="destination_type">Destination Type:</label>
             <select id="destination_type" name="destination_type" required>
+                <option value="" disabled selected>Destination Type</option>
                 <option value="beach">Beach</option>
                 <option value="city">City</option>
                 <option value="mountain">Mountain</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="activity">Activities:</label>
-            <input type="text" id="activity" name="activity" required>
+            <input type="text" id="activity" name="activity" placeholder="Activities" required>
         </div>
         <div class="form-group">
-            <label for="climate">Climate:</label>
             <select id="climate" name="climate" required>
+                <option value="" disabled selected>Climate</option>
                 <option value="warm">Warm</option>
                 <option value="temperate">Temperate</option> <!-- Updated option -->
                 <option value="cool">Cool</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="budget">Budget:</label>
             <select id="budget" name="budget" required>
+                <option value="" disabled selected>Budget</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="month">Month:</label>
             <select id="month" name="month" required>
+                <option value="" disabled selected>Month</option>
                 <option value="January">January</option>
                 <option value="February">February</option>
                 <option value="March">March</option>

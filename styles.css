@@ -54,15 +54,14 @@ form {
     background: var(--input-background);
 }
 
-label {
-    display: block;
-    padding: 10px;
-    color: var(--text-color);
+.form-group {
+    position: relative;
+    margin-bottom: 20px;
 }
 
 input, select {
     width: 100%;
-    padding: 10px;
+    padding: 15px;
     box-sizing: border-box;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -70,13 +69,32 @@ input, select {
     background: var(--background-color);
     font-family: 'Avenir Light', sans-serif;
     -webkit-appearance: none;
+    appearance: none;
+    font-size: 16px;
+}
+
+input::placeholder, select::placeholder {
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+input:focus::placeholder, select:focus::placeholder {
+    opacity: 0;
+}
+
+select:focus option:first-child {
+    display: none;
+}
+
+select option {
+    color: black;
 }
 
 /* Submit button styles */
 button[type="submit"] {
     background-color: var(--button-bg);
     color: white;
-    padding: 10px;
+    padding: 15px;
     border: none;
     margin-top: 12px;
     cursor: pointer;
@@ -85,6 +103,7 @@ button[type="submit"] {
     text-align: center;
     font-family: 'Avenir Light', sans-serif;
     width: 100%;
+    font-size: 16px;
 }
 
 button[type="submit"]:hover,
