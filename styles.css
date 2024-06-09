@@ -53,6 +53,10 @@ form {
     background: var(--input-background);
 }
 
+.form-group-fullresponse {
+    position: relative;
+}
+
 .form-group {
     position: relative;
     margin-bottom: 15px;
@@ -102,7 +106,6 @@ button[type="submit"] {
     color: white;
     padding: 15px;
     border: none;
-    margin-top: 12px;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     border-radius: 5px;
@@ -120,7 +123,8 @@ button[type="submit"]:active {
 
 .suggestion-container {
     text-align: center;
-    padding: 20px;
+    margin-top: 10px;
+    padding: 10px;
     border: 2px solid var(--border-color);
     background-color: var(--background-color);
     border-radius: 5px;
