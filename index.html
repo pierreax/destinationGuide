@@ -69,7 +69,12 @@
         </div>    
     </form>
 
-    <h2>Additional Information:</h2>
-    <div id="fullResponse"></div>
+    <h2 id="additionalInfoHeader" style="display: none;">Additional Information:</h2>
+    <h2 id="generateInfoHeader" style="display: none;">(please allow a few seconds to generate)</h2>
+    <form id="fullResponseForm" style="display: none;">
+        <div class="form-group">
+            <textarea id="fullResponse" name="fullResponse" rows="10" readonly></textarea>
+        </div>
+    </form>
 </body>
 </html>

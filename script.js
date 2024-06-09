@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function resizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
     event.preventDefault();
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
@@ -25,9 +30,14 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     // Clear previous suggestions and full response
     document.getElementById('suggestion').innerText = '';
     document.getElementById('fullResponse').innerText = '';
+    document.getElementById('fullResponseForm').style.display = 'none';
+    document.getElementById('additionalInfoHeader').style.display = 'none';
+    document.getElementById('generateInfoHeader').style.display = 'none';
 
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
 
     const formData = new FormData(event.target);
     const preferences = {
@@ -60,6 +70,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     .then(response => {
         if (!response.ok) {
             loader.style.display = 'none'; // Hide the loader if validation fails
+            submitButton.innerText = 'Get Suggestion'; // Revert button text
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         return response.json(); // Get the JSON response
@@ -67,15 +78,26 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     .then(data => {
         console.log('Initial Response data:', data); // Logging initial response data
         
-        if (!previousSuggestions.includes(data.suggestion)) {
-            previousSuggestions.push(data.suggestion);
+        // Extract only the city and country
+        const cityCountry = data.suggestion.split('.')[0].trim();
+
+        if (!previousSuggestions.includes(cityCountry)) {
+            previousSuggestions.push(cityCountry);
             sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
-            document.getElementById('suggestion').innerText = data.suggestion;
+            document.getElementById('suggestion').innerText = cityCountry;
+            loader.style.display = 'none'; // Hide the loader
+
+            // Change button text after displaying city and country
+            submitButton.innerText = 'Suggest Something Else';
+
+            // Show the additional information headers
+            document.getElementById('additionalInfoHeader').style.display = 'block';
+            document.getElementById('generateInfoHeader').style.display = 'block';
 
             // Follow-up request for full explanation
             const followUpRequestBody = {
-                cityCountry: data.suggestion,
+                cityCountry: cityCountry,
                 preferences: preferences
             };
 
@@ -89,6 +111,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         } else {
             document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
             document.getElementById('fullResponse').innerText = '';
+            submitButton.innerText = 'Get Suggestion'; // Revert button text
             loader.style.display = 'none'; // Hide the loader
             return null;
         }
@@ -96,6 +119,7 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     .then(response => {
         if (response) {
             if (!response.ok) {
+                submitButton.innerText = 'Get Suggestion'; // Revert button text
                 throw new Error(`Network response was not ok: ${response.statusText}`);
             }
             return response.json();
@@ -104,7 +128,10 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     .then(data => {
         if (data) {
             console.log('Follow-up Response data:', data); // Logging follow-up response data
-            document.getElementById('fullResponse').innerText = data.full_response;
+            const fullResponseTextarea = document.getElementById('fullResponse');
+            fullResponseTextarea.value = data.full_response;
+            document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
+            resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
         }
         loader.style.display = 'none'; // Hide the loader
     })
@@ -113,5 +140,6 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         console.error('Error:', error);
         document.getElementById('suggestion').innerText = 'Error fetching suggestion';
         document.getElementById('fullResponse').innerText = '';
+        submitButton.innerText = 'Get Suggestion'; // Revert button text
     });
 });

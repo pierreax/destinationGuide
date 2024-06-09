@@ -30,7 +30,6 @@ h1, h2 {
     color: var(--text-color);
     margin: 0;
     text-align: center;
-    padding: 10px;
     background-color: var(--accent-color);
     font-weight: normal;
 }
@@ -56,10 +55,10 @@ form {
 
 .form-group {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-input, select {
+input, select, textarea {
     width: 100%;
     padding: 15px;
     box-sizing: border-box;
@@ -71,6 +70,8 @@ input, select {
     -webkit-appearance: none;
     appearance: none;
     font-size: 16px;
+    resize: none; /* Prevent resizing */
+    overflow: hidden; /* Hide scrollbar */
 }
 
 label {
@@ -87,7 +88,8 @@ label {
 }
 
 input:focus + label, select:focus + label,
-input:not(:placeholder-shown) + label, select:not([value=""]) + label {
+input:not(:placeholder-shown) + label, select:not([value=""]) + label,
+textarea:focus + label, textarea:not(:placeholder-shown) + label {
     top: 0;
     left: 10px;
     font-size: 12px;
@@ -160,9 +162,22 @@ button[type="submit"]:active {
     100% { transform: rotate(360deg); }
 }
 
+/* Full response form styles */
+#fullResponseForm {
+    max-width: 300px;
+    margin: 20px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background: var(--input-background);
+}
+
+textarea {
+    height: auto; /* Adjust the height of the textarea */
+}
+
 /* Media query for mobile devices */
 @media (max-width: 600px) {
-    input, select, button[type="submit"] {
+    input, select, button[type="submit"], textarea {
         padding: 15px;
         font-size: 16px;
     }
