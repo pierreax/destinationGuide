@@ -1,4 +1,5 @@
 document.getElementById('destinationForm').addEventListener('submit', function(event) {
+    $('.loader').show(); // Show the loader
     event.preventDefault();
     const formData = new FormData(event.target);
     const preferences = {
@@ -18,8 +19,10 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
     })
     .then(response => {
         if (!response.ok) {
+            $('.loader').hide(); // Hide the loader if validation fails
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
+        $('.loader').hide(); // Hide the loader
         return response.text(); // Get the raw response text
     })
     .then(text => {
