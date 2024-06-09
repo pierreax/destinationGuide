@@ -10,7 +10,7 @@
     --loader-border: #f3f3f3;
     --loader-bg: #3498db;
 }
-  
+
 /* Fonts */
 @font-face {
     font-family: 'Avenir Light';
@@ -18,14 +18,14 @@
     font-weight: normal;
     font-style: normal;
 }
-  
+
 /* Global styles */
 body {
     font-family: 'Avenir Light', sans-serif;
     margin: 20px;
     background-color: var(--background-color);
 }
-  
+
 h1, h2 {
     color: var(--text-color);
     margin: 0;
@@ -34,15 +34,15 @@ h1, h2 {
     background-color: var(--accent-color);
     font-weight: normal;
 }
-  
+
 h1 {
     font-size: 1.2em;
 }
-  
+
 h2 {
     font-size: 1.0em;
 }
-  
+
 /* Form styles */
 form {
     position: relative;
@@ -53,13 +53,13 @@ form {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background: var(--input-background);
 }
-  
+
 label {
     display: block;
     padding: 10px;
     color: var(--text-color);
 }
-  
+
 input, select {
     width: 100%;
     padding: 10px;
@@ -69,8 +69,9 @@ input, select {
     border: 1px solid var(--border-color);
     background: var(--background-color);
     font-family: 'Avenir Light', sans-serif;
+    -webkit-appearance: none;
 }
-  
+
 /* Submit button styles */
 button[type="submit"] {
     background-color: var(--button-bg);
@@ -85,7 +86,7 @@ button[type="submit"] {
     font-family: 'Avenir Light', sans-serif;
     width: 100%;
 }
-  
+
 button[type="submit"]:hover,
 button[type="submit"]:active {
     background-color: var(--button-hover-bg);
@@ -134,4 +135,16 @@ button[type="submit"]:active {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Media query for mobile devices */
+@media (max-width: 600px) {
+    input, select, button[type="submit"] {
+        padding: 15px;
+        font-size: 16px;
+    }
+
+    form {
+        padding: 15px;
+    }
 }
