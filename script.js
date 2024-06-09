@@ -23,6 +23,8 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
         previousSuggestions: previousSuggestions
     };
 
+    console.log('Request Body:', requestBody); // Logging the request body
+
     fetch('https://flightwebsiteapp.azurewebsites.net/api/Destinations?code=Klk7h6hTV10eit9wstlDC2n8mYARisNt9pE61-bXpA9vAzFuxoe4Rw%3D%3D', {
         method: 'POST',
         headers: {
