@@ -18,12 +18,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+async function loadAirportsData() {
+    const response = await fetch('airports.txt');
+    const text = await response.text();
+    const airportLines = text.split('\n');
+    const airportData = {};
+
+    airportLines.forEach(line => {
+        const [iata, city] = line.split(' - ');
+        if (iata && city) {
+            airportData[city.trim()] = iata.trim();
+        }
+    });
+
+    return airportData;
+}
+
 function resizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
 
-document.getElementById('destinationForm').addEventListener('submit', function(event) {
+document.getElementById('destinationForm').addEventListener('submit', async function(event) {
     event.preventDefault();
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
 
@@ -92,18 +108,37 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
             document.getElementById('additionalInfoHeader').style.display = 'block';
             document.getElementById('generateInfoHeader').style.display = 'block';
 
-            // Follow-up request for full explanation
-            const followUpRequestBody = {
-                cityCountry: data.suggestion,
-                preferences: preferences
-            };
+            // Load the airport data to create the link dynamically
+            return loadAirportsData().then(airportData => {
+                const suggestion = document.getElementById('suggestion').innerText.trim();
+                const cityName = suggestion.split(",")[0].trim(); // Split and trim the city name
+                const iataCodeTo = airportData[cityName];
+                console.log('Suggestion:', suggestion); // Log the suggestion
+                console.log('City Name:', cityName); // Log the city name
+                console.log('IATA Code:', iataCodeTo); // Log the IATA code
+                if (iataCodeTo) {
+                    const searchFlightsButton = document.getElementById('searchFlightsButton');
+                    searchFlightsButton.onclick = function() {
+                        window.location.href = `https://www.robotize.no/flights?iataCodeTo=${iataCodeTo}`;
+                    };
+                    searchFlightsButton.style.display = 'block'; // Show the button
+                } else {
+                    console.log('No IATA code found for the suggestion.');
+                }
 
-            return fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsFullExplanation?code=rAK_wIArJb_VelW8sVILecWGSD8oFj-mdhaKljLtLedLAzFukWLJ6A%3D%3D', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(followUpRequestBody)
+                // Follow-up request for full explanation
+                const followUpRequestBody = {
+                    cityCountry: data.suggestion,
+                    preferences: preferences
+                };
+
+                return fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsFullExplanation?code=rAK_wIArJb_VelW8sVILecWGSD8oFj-mdhaKljLtLedLAzFukWLJ6A%3D%3D', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(followUpRequestBody)
+                });
             });
         } else {
             document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
@@ -113,17 +148,13 @@ document.getElementById('destinationForm').addEventListener('submit', function(e
             return null;
         }
     })
-    .then(response => {
+    .then(async (response) => {
         if (response) {
             if (!response.ok) {
                 submitButton.innerText = 'Get Suggestion'; // Revert button text
                 throw new Error(`Network response was not ok: ${response.statusText}`);
             }
-            return response.json();
-        }
-    })
-    .then(data => {
-        if (data) {
+            const data = await response.json();
             console.log('Follow-up Response data:', data); // Logging follow-up response data
             const fullResponseTextarea = document.getElementById('fullResponse');
             fullResponseTextarea.value = data.full_response;

@@ -121,6 +121,28 @@ button[type="submit"]:active {
     transform: translateY(-2px);
 }
 
+/* Search flights button styles */
+button[id="searchFlightsButton"] {
+    background-color: var(--button-bg);
+    color: white;
+    padding: 15px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    border-radius: 5px;
+    text-align: center;
+    font-family: 'Avenir Light', sans-serif;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+button[id="searchFlightsButton"]:hover,
+button[id="searchFlightsButton"]:active {
+    background-color: var(--button-hover-bg);
+    transform: translateY(-2px);
+}
+
 .suggestion-container {
     text-align: center;
     margin-top: 10px;
