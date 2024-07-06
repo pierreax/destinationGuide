@@ -49,6 +49,7 @@ document.getElementById('destinationForm').addEventListener('submit', async func
     document.getElementById('fullResponseForm').style.display = 'none';
     document.getElementById('additionalInfoHeader').style.display = 'none';
     document.getElementById('generateInfoHeader').style.display = 'none';
+    document.getElementById('suggestion-container').style.display = 'none'; // Hide suggestion field initially
 
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
@@ -99,6 +100,7 @@ document.getElementById('destinationForm').addEventListener('submit', async func
             sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
             document.getElementById('suggestion').innerText = data.suggestion;
+            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
             loader.style.display = 'none'; // Hide the loader
 
             // Change button text after displaying city and country
@@ -136,6 +138,7 @@ document.getElementById('destinationForm').addEventListener('submit', async func
             });
         } else {
             document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
+            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even if it was already provided
             document.getElementById('fullResponse').innerText = '';
             submitButton.innerText = 'Get Suggestion'; // Revert button text
             loader.style.display = 'none'; // Hide the loader
@@ -165,6 +168,7 @@ document.getElementById('destinationForm').addEventListener('submit', async func
         loader.style.display = 'none'; // Hide the loader
         console.error('Error:', error);
         document.getElementById('suggestion').innerText = 'Error fetching suggestion';
+        document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even on error
         document.getElementById('fullResponse').innerText = '';
         submitButton.innerText = 'Get Suggestion'; // Revert button text
     });
