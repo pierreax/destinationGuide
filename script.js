@@ -115,7 +115,7 @@ document.getElementById('destinationForm').addEventListener('submit', async func
                 if (iataCodeTo) {
                     const searchFlightsButton = document.getElementById('searchFlightsButton');
                     searchFlightsButton.onclick = function() {
-                        window.open(`https://www.robotize.no/flights?iataCodeTo=${iataCodeTo}`, '_top'); // Open in top-level window
+                        window.open(`https://www.robotize.no/flights?iataCodeTo=${iataCodeTo}`, '_blank'); // Open in new tab
                     };
                     searchFlightsButton.style.display = 'block'; // Show the button
                 }
