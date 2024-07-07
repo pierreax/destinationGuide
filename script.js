@@ -22,14 +22,14 @@ async function loadAirportsData() {
     const response = await fetch('airports.txt');
     const text = await response.text();
     const airportLines = text.split('\n');
-    const airportData = {};
+    const airportData = [];
 
     airportLines.forEach(line => {
         const [iata, city] = line.split(' - ');
         if (iata && city) {
             // Normalize the city name to remove accents
             const normalizedCity = city.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            airportData[normalizedCity] = iata.trim();
+            airportData.push({ iata: iata.trim(), city: normalizedCity });
         }
     });
 
@@ -44,6 +44,7 @@ function resizeTextarea(textarea) {
 let currentIataCodeTo = '';
 
 document.getElementById('submitButton').addEventListener('click', async function(event) {
+    event.preventDefault();
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
 
     // Clear previous suggestions and full response
@@ -118,11 +119,13 @@ document.getElementById('submitButton').addEventListener('click', async function
             document.getElementById('generateInfoHeader').style.display = 'block';
 
             // Load the airport data to create the link dynamically
-            loadAirportsData().then(airportData => {
+            loadAirportsData().then(airports => {
                 const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
                 const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                currentIataCodeTo = airportData[normalizedSuggestionCity];
-                if (currentIataCodeTo) {
+                const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
+                if (matchedAirport) {
+                    currentIataCodeTo = matchedAirport.iata;
+                    console.log('Creating link with ',currentIataCodeTo)
                     const searchFlightsButton = document.getElementById('searchFlightsButton');
                     searchFlightsButton.onclick = function() {
                         window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
