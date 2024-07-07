@@ -27,7 +27,9 @@ async function loadAirportsData() {
     airportLines.forEach(line => {
         const [iata, city] = line.split(' - ');
         if (iata && city) {
-            airportData[city.trim()] = iata.trim();
+            // Normalize the city name to remove accents
+            const normalizedCity = city.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            airportData[normalizedCity] = iata.trim();
         }
     });
 
@@ -117,8 +119,9 @@ document.getElementById('submitButton').addEventListener('click', async function
 
             // Load the airport data to create the link dynamically
             loadAirportsData().then(airportData => {
-                const suggestion = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                currentIataCodeTo = airportData[suggestion];
+                const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
+                const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                currentIataCodeTo = airportData[normalizedSuggestionCity];
                 if (currentIataCodeTo) {
                     const searchFlightsButton = document.getElementById('searchFlightsButton');
                     searchFlightsButton.onclick = function() {
