@@ -39,8 +39,9 @@ function resizeTextarea(textarea) {
     textarea.style.height = textarea.scrollHeight + 'px';
 }
 
-document.getElementById('destinationForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
+let currentIataCodeTo = '';
+
+document.getElementById('submitButton').addEventListener('click', async function(event) {
     console.log('Form submitted!'); // Logging to check if the event listener is triggered
 
     // Clear previous suggestions and full response
@@ -51,12 +52,16 @@ document.getElementById('destinationForm').addEventListener('submit', async func
     document.getElementById('generateInfoHeader').style.display = 'none';
     document.getElementById('suggestion-container').style.display = 'none'; // Hide suggestion field initially
 
+    // Clear iataCodeTo variable and hide the SearchFlightsButton
+    currentIataCodeTo = '';
+    document.getElementById('searchFlightsButton').style.display = 'none';
+
     const loader = document.getElementById('loader');
     loader.style.display = 'block'; // Show the loader
 
-    const submitButton = event.target.querySelector('button[type="submit"]');
+    const submitButton = event.target;
 
-    const formData = new FormData(event.target);
+    const formData = new FormData(document.getElementById('destinationForm'));
     const preferences = {
         destination_type: formData.get('destination_type'),
         activity: formData.get('activity'),
@@ -113,11 +118,11 @@ document.getElementById('destinationForm').addEventListener('submit', async func
             // Load the airport data to create the link dynamically
             loadAirportsData().then(airportData => {
                 const suggestion = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                const iataCodeTo = airportData[suggestion];
-                if (iataCodeTo) {
+                currentIataCodeTo = airportData[suggestion];
+                if (currentIataCodeTo) {
                     const searchFlightsButton = document.getElementById('searchFlightsButton');
                     searchFlightsButton.onclick = function() {
-                        window.open(`https://www.robotize.no/flights?iataCodeTo=${iataCodeTo}`, '_blank'); // Open in new tab
+                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
                     };
                     searchFlightsButton.style.display = 'block'; // Show the button
                 }
@@ -172,4 +177,12 @@ document.getElementById('destinationForm').addEventListener('submit', async func
         document.getElementById('fullResponse').innerText = '';
         submitButton.innerText = 'Get Suggestion'; // Revert button text
     });
+});
+
+// This event listener ensures the "Search Flights" button only opens a new tab with the URL.
+document.getElementById('searchFlightsButton').addEventListener('click', function() {
+    if (currentIataCodeTo) {
+        console.log('Opening a new tab with ', currentIataCodeTo);
+        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+    }
 });

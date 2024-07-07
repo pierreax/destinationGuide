@@ -101,7 +101,7 @@ textarea:focus + label, textarea:not(:placeholder-shown) + label {
 }
 
 /* Submit button styles */
-button[type="submit"] {
+button[id="submitButton"] {
     background-color: var(--button-bg);
     color: white;
     padding: 15px;
@@ -115,8 +115,8 @@ button[type="submit"] {
     font-size: 16px;
 }
 
-button[type="submit"]:hover,
-button[type="submit"]:active {
+button[id="submitButton"]:hover,
+button[id="submitButton"]:active {
     background-color: var(--button-hover-bg);
     transform: translateY(-2px);
 }
