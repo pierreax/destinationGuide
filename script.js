@@ -63,6 +63,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     loader.style.display = 'block'; // Show the loader
 
     const submitButton = event.target;
+    submitButton.disabled = true; // Disable the button
 
     const formData = new FormData(document.getElementById('destinationForm'));
     const preferences = {
@@ -95,7 +96,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     .then(response => {
         if (!response.ok) {
             loader.style.display = 'none'; // Hide the loader if validation fails
-            submitButton.innerText = 'Get Suggestion'; // Revert button text
+            submitButton.disabled = false; // Enable the button
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         return response.json(); // Get the JSON response
@@ -153,6 +154,7 @@ document.getElementById('submitButton').addEventListener('click', async function
             document.getElementById('fullResponse').innerText = '';
             submitButton.innerText = 'Get Suggestion'; // Revert button text
             loader.style.display = 'none'; // Hide the loader
+            submitButton.disabled = false; // Enable the button
             return null;
         }
     })
@@ -160,6 +162,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         if (response) {
             if (!response.ok) {
                 submitButton.innerText = 'Get Suggestion'; // Revert button text
+                submitButton.disabled = false; // Enable the button
                 throw new Error(`Network response was not ok: ${response.statusText}`);
             }
             return response.json();
@@ -174,6 +177,7 @@ document.getElementById('submitButton').addEventListener('click', async function
             resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
         }
         loader.style.display = 'none'; // Hide the loader
+        submitButton.disabled = false; // Enable the button
     })
     .catch(error => {
         loader.style.display = 'none'; // Hide the loader
@@ -182,6 +186,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even on error
         document.getElementById('fullResponse').innerText = '';
         submitButton.innerText = 'Get Suggestion'; // Revert button text
+        submitButton.disabled = false; // Enable the button
     });
 });
 

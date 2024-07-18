@@ -121,6 +121,12 @@ button[id="submitButton"]:active {
     transform: translateY(-2px);
 }
 
+button[id="submitButton"]:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    color: #666666;
+}
+
 /* Search flights button styles */
 button[id="searchFlightsButton"] {
     background-color: var(--button-bg);
