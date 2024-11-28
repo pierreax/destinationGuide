@@ -14,29 +14,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// SSE route for continuous streaming (GET)
+// SSE route with no delay
 app.get('/stream-suggestions', async (req, res) => {
-    // Retrieve preferences sent as query parameters
-    const preferences = req.query.preferences ? JSON.parse(req.query.preferences) : {};
-
-    // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    // Log that we're streaming the data
-    console.log('Starting SSE stream');
-
-    // Simulate an initial suggestion
+    // Immediately send both suggestion and full response
     res.write('data: {"suggestion": "Initial suggestion from server"}\n\n');
-
-    // Simulate sending further data (e.g., full response after 2 seconds)
-    setTimeout(() => {
-        res.write('data: {"full_response": "Detailed explanation after city/country"}\n\n');
-        res.end();  // End the stream after sending full response
-    }, 2000);  // Wait 2 seconds before sending the full response
+    res.write('data: {"full_response": "Detailed explanation after city/country"}\n\n');
+    res.end();
 });
+
 
 // POST route for handling initial suggestion request
 app.post('/suggest-destination', async (req, res) => {
