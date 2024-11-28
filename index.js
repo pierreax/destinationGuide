@@ -14,19 +14,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// SSE route with no delay
+// SSE route
 app.get('/stream-suggestions', async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    res.flushHeaders();  // Send the headers to the client
 
     // Immediately send both suggestion and full response
     res.write('data: {"suggestion": "Initial suggestion from server"}\n\n');
     res.write('data: {"full_response": "Detailed explanation after city/country"}\n\n');
-    res.end();
+    
+    res.end();  // End the stream
 });
-
 
 // POST route for handling initial suggestion request
 app.post('/suggest-destination', async (req, res) => {
