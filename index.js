@@ -1,16 +1,21 @@
-// server.js
+// index.js
 
 const express = require('express');
 const path = require('path');
-const compression = require('compression');
+const compression = require('compression'); // For response compression
+const morgan = require('morgan'); // For logging
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Use morgan for logging HTTP requests
+app.use(morgan('combined'));
+
+// Use compression middleware
+// IMPORTANT: Apply compression only to non-streaming routes to prevent interference
+app.use(compression());
+
 // Middleware to parse JSON requests
 app.use(express.json());
-
-// Use compression middleware to enable res.flush()
-app.use(compression());
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname)));
@@ -63,22 +68,17 @@ app.post('/suggest-destination', async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch from OpenAI API' });
         }
 
-        // Set headers for chunked transfer
+        // Set headers for chunked transfer without compression
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Transfer-Encoding', 'chunked');
+        // Disable compression for this route to prevent buffering
+        res.setHeader('Content-Encoding', 'identity');
 
         // Listen to OpenAI's streamed response
         const reader = openaiResponse.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-
-        // Helper function to send parsed data to the client
-        const sendData = (data) => {
-            res.write(JSON.stringify(data) + '\n');
-            if (res.flush) {
-                res.flush(); // Flush the response to ensure immediate delivery
-            }
-        };
+        let isSuggestionSent = false;
 
         while (true) {
             const { done, value } = await reader.read();
@@ -104,18 +104,18 @@ app.post('/suggest-destination', async (req, res) => {
                         const content = parsed.choices[0].delta.content;
 
                         if (content) {
-                            // Check if it's the first line (suggestion)
-                            if (!res.locals.suggestionSent) {
+                            if (!isSuggestionSent) {
+                                // First chunk: Suggestion
                                 const suggestion = content.trim();
-                                sendData({ suggestion });
-                                res.locals.suggestionSent = true;
+                                const suggestionData = { suggestion };
+                                res.write(JSON.stringify(suggestionData) + '\n');
+                                res.flush(); // Flush the chunk to the client
+                                isSuggestionSent = true;
                             } else {
-                                // Append to full_response
-                                if (!res.locals.fullResponse) {
-                                    res.locals.fullResponse = '';
-                                }
-                                res.locals.fullResponse += content;
-                                sendData({ full_response: res.locals.fullResponse.trim() });
+                                // Subsequent chunks: Full response
+                                const fullResponseData = { full_response: content };
+                                res.write(JSON.stringify(fullResponseData) + '\n');
+                                res.flush(); // Flush the chunk to the client
                             }
                         }
                     } catch (err) {

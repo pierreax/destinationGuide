@@ -30,7 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Load airport data from 'airports.txt'
+let cachedAirportData = null;
+
 async function loadAirportsData() {
+    if (cachedAirportData) {
+        return cachedAirportData;
+    }
+
     const response = await fetch('airports.txt');
     const text = await response.text();
     const airportLines = text.split('\n');
@@ -46,6 +52,7 @@ async function loadAirportsData() {
         }
     });
 
+    cachedAirportData = airportData; // Cache the data
     return airportData;
 }
 
@@ -117,7 +124,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let isSuggestionReceived = false; // Flag to track if suggestion is received
+        let isSuggestionReceived = false;
 
         while (true) {
             const { done, value } = await reader.read();
@@ -143,7 +150,7 @@ document.getElementById('submitButton').addEventListener('click', async function
                             document.getElementById('suggestion').innerText = data.suggestion;
                             document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
                             
-                            // Hide the loader after receiving the first chunk (suggestion)
+                            // Hide the loader after receiving the suggestion
                             loader.style.display = 'none';
 
                             // Change button text after displaying city and country
@@ -175,7 +182,7 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                     if (data.full_response) {
                         const fullResponseTextarea = document.getElementById('fullResponse');
-                        fullResponseTextarea.value += data.full_response + '\n'; // Append to existing content
+                        fullResponseTextarea.value += data.full_response; // Append to existing content
                         document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                         resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                     }
@@ -232,7 +239,7 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                 if (data.full_response) {
                     const fullResponseTextarea = document.getElementById('fullResponse');
-                    fullResponseTextarea.value += data.full_response + '\n'; // Append to existing content
+                    fullResponseTextarea.value += data.full_response; // Append to existing content
                     document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                     resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                 }
