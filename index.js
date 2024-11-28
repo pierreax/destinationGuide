@@ -1,5 +1,7 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const path = require('path');
+
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -14,7 +16,31 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Initial suggestion request (POST)
+// SSE route for continuous streaming (GET)
+app.get('/stream-suggestions', async (req, res) => {
+    // Retrieve preferences sent as query parameters
+    const preferences = req.query.preferences ? JSON.parse(req.query.preferences) : {};
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // Log that we're streaming the data
+    console.log('Starting SSE stream');
+
+    // Simulate an initial suggestion
+    res.write('data: {"suggestion": "Initial suggestion from server"}\n\n');
+
+    // Simulate sending further data (e.g., full response after 2 seconds)
+    setTimeout(() => {
+        res.write('data: {"full_response": "Detailed explanation after city/country"}\n\n');
+        res.end();  // End the stream after sending full response
+    }, 2000);  // Wait 2 seconds before sending the full response
+});
+
+// POST route for handling initial suggestion request
 app.post('/suggest-destination', async (req, res) => {
     const preferences = req.body.preferences;
     const previousSuggestions = req.body.previousSuggestions || [];
@@ -34,6 +60,7 @@ app.post('/suggest-destination', async (req, res) => {
     const openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
 
     try {
+        // Make API request to OpenAI (GPT-4)
         const response = await fetch(openaiEndpoint, {
             method: 'POST',
             headers: {
@@ -51,43 +78,25 @@ app.post('/suggest-destination', async (req, res) => {
 
         const responseData = await response.json();
 
-        // Ensure we received a successful response
         if (!response.ok) {
             throw new Error('Failed to fetch from OpenAI API');
         }
 
+        // Split the response and send initial suggestion and full response separately
         const fullResponse = responseData.choices[0].message.content;
         const [cityCountry, ...rest] = fullResponse.split('\n');
         const fullResponseWithoutCityCountry = rest.join('\n').trim();
 
-        // Send initial city and country response
+        // Send the city and country suggestion
         res.json({ suggestion: cityCountry.trim(), full_response: fullResponseWithoutCityCountry });
 
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ error: 'Error generating response.' });
+        res.status(500).json({ error: 'Error generating response from OpenAI API' });
     }
 });
 
-// SSE route for continuous streaming (GET)
-app.get('/stream-suggestions', async (req, res) => {
-    const preferences = req.query.preferences;  // Assuming you can send preferences via query parameters or adjust based on the actual logic
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
-
-    // Send initial suggestion to the front-end
-    res.write(`data: ${JSON.stringify({ suggestion: "Initial suggestion from server" })}\n\n`);
-
-    // Simulate sending further data (full response, etc.)
-    setTimeout(() => {
-        res.write(`data: ${JSON.stringify({ full_response: "Detailed explanation after city/country" })}\n\n`);
-        res.end();  // Close the stream
-    }, 2000);  // Wait 2 seconds before sending the full response
-});
-
+// Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
