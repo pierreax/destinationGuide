@@ -1,29 +1,40 @@
 document.addEventListener('DOMContentLoaded', function() {
     var inputs = document.querySelectorAll('input, select');
+    
+    // Loop through each input and select element
     inputs.forEach(function(input) {
+        // Focus event: Add 'active' class to label when input/select is focused
         input.addEventListener('focus', function() {
-            input.previousElementSibling.classList.add('active');
-        });
-
-        input.addEventListener('blur', function() {
-            if (!input.value) {
-                input.previousElementSibling.classList.remove('active');
+            const label = input.previousElementSibling;
+            if (label) {
+                label.classList.add('active');
             }
         });
 
-        // Initial check to float label if input has value
-        if (input.value) {
-            input.previousElementSibling.classList.add('active');
+        // Blur event: Remove 'active' class from label when input/select loses focus
+        input.addEventListener('blur', function() {
+            const label = input.previousElementSibling;
+            if (label && !input.value) {
+                label.classList.remove('active');
+            }
+        });
+
+        // Initial check to float label if input/select has a value
+        const label = input.previousElementSibling;
+        if (label && input.value) {
+            label.classList.add('active');
         }
     });
 });
 
+// Load airport data from 'airports.txt'
 async function loadAirportsData() {
     const response = await fetch('airports.txt');
     const text = await response.text();
     const airportLines = text.split('\n');
     const airportData = [];
 
+    // Process each line of the airports data
     airportLines.forEach(line => {
         const [iata, city] = line.split(' - ');
         if (iata && city) {
@@ -36,16 +47,19 @@ async function loadAirportsData() {
     return airportData;
 }
 
+// Resize textarea to fit content
 function resizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
 
+// Variable to store the current IATA code for flights
 let currentIataCodeTo = '';
 
+// Handle form submission
 document.getElementById('submitButton').addEventListener('click', async function(event) {
     event.preventDefault();
-    console.log('Form submitted!'); // Logging to check if the event listener is triggered
+    console.log('Form submitted!');
 
     // Clear previous suggestions and full response
     document.getElementById('suggestion').innerText = '';
@@ -53,7 +67,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     document.getElementById('fullResponseForm').style.display = 'none';
     document.getElementById('additionalInfoHeader').style.display = 'none';
     document.getElementById('generateInfoHeader').style.display = 'none';
-    document.getElementById('suggestion-container').style.display = 'none'; // Hide suggestion field initially
+    document.getElementById('suggestion-container').style.display = 'none'; 
 
     // Clear iataCodeTo variable and hide the SearchFlightsButton
     currentIataCodeTo = '';
@@ -74,7 +88,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         month: formData.get('month')
     };
 
-    console.log('Preferences:', preferences); // Logging preferences
+    console.log('Preferences:', preferences);
 
     let previousSuggestions = JSON.parse(sessionStorage.getItem('previousSuggestions')) || [];
     
@@ -83,7 +97,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         previousSuggestions: previousSuggestions
     };
 
-    console.log('Request Body:', requestBody); // Logging the request body
+    console.log('Request Body:', requestBody);
 
     // Handle Server-Sent Events (SSE)
     const eventSource = new EventSource(`/stream-suggestions?preferences=${encodeURIComponent(JSON.stringify(preferences))}`); // Correct SSE endpoint
