@@ -75,7 +75,6 @@ document.getElementById('submitButton').addEventListener('click', async function
     document.getElementById('fullResponseForm').style.display = 'none';
     document.getElementById('additionalInfoHeader').style.display = 'none';
     document.getElementById('generateInfoHeader').style.display = 'none';
-    document.getElementById('suggestion-container').style.display = 'none'; 
 
     // Clear iataCodeTo variable and hide the SearchFlightsButton
     currentIataCodeTo = '';

@@ -149,22 +149,6 @@ button[id="searchFlightsButton"]:active {
     transform: translateY(-2px);
 }
 
-.suggestion-container {
-    text-align: center;
-    margin-top: 10px;
-    padding: 10px;
-    border: 2px solid var(--border-color);
-    background-color: var(--background-color);
-    border-radius: 5px;
-    max-width: 300px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.suggestion {
-    font-weight: normal;
-    color: var(--text-color);
-    padding: 10px;
-}
 
 /* Loader animation styles */
 .loader {
