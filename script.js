@@ -70,9 +70,8 @@ document.getElementById('submitButton').addEventListener('click', async function
     event.preventDefault();
     console.log('Form submitted!');
 
-    // Clear previous suggestions and full response
-    document.getElementById('suggestion').innerText = '';
-    document.getElementById('fullResponse').innerText = '';
+    // Clear previous full response
+    document.getElementById('fullResponse').value = '';
     document.getElementById('fullResponseForm').style.display = 'none';
     document.getElementById('additionalInfoHeader').style.display = 'none';
     document.getElementById('generateInfoHeader').style.display = 'none';
@@ -151,42 +150,6 @@ document.getElementById('submitButton').addEventListener('click', async function
                     }
                 }
 
-                if (event === 'suggestion' && data.suggestion) {
-                    if (!previousSuggestions.includes(data.suggestion)) {
-                        previousSuggestions.push(data.suggestion);
-                        sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
-
-                        document.getElementById('suggestion').innerText = data.suggestion;
-                        document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
-                        
-                        // Hide the loader after receiving the suggestion
-                        loader.style.display = 'none';
-
-                        // Change button text after displaying city and country
-                        submitButton.innerText = 'Suggest Something Else';
-
-                        // Show the additional information headers
-                        document.getElementById('additionalInfoHeader').style.display = 'block';
-                        document.getElementById('generateInfoHeader').style.display = 'block';
-
-                        // Load the airport data to create the link dynamically
-                        loadAirportsData().then(airports => {
-                            const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                            const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                            const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
-                            if (matchedAirport) {
-                                currentIataCodeTo = matchedAirport.iata;
-                                console.log('Creating link with ', currentIataCodeTo)
-                                const searchFlightsButton = document.getElementById('searchFlightsButton');
-                                searchFlightsButton.onclick = function() {
-                                    window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                                };
-                                searchFlightsButton.style.display = 'block'; // Show the button
-                            }
-                        });
-                    }
-                }
-
                 if (event === 'full_response' && data.full_response) {
                     const fullResponseTextarea = document.getElementById('fullResponse');
                     fullResponseText += data.full_response;
@@ -198,7 +161,44 @@ document.getElementById('submitButton').addEventListener('click', async function
                 if (event === 'end') {
                     // Connection has ended
                     console.log('Streaming completed.');
+                    loader.style.display = 'none'; // Hide the loader
                     submitButton.disabled = false; // Enable the button
+
+                    // After streaming is complete, extract City and Country from fullResponseText
+                    const [firstSentence] = fullResponseText.split('.');
+                    if (firstSentence) {
+                        const cityCountry = firstSentence.trim();
+                        console.log('Extracted City, Country:', cityCountry);
+
+                        // Extract city from "City, Country"
+                        const [city, country] = cityCountry.split(',').map(part => part.trim());
+
+                        if (city && country) {
+                            // Load airport data to find IATA code
+                            loadAirportsData().then(airports => {
+                                const matchedAirport = airports.find(airport => airport.city.toLowerCase() === city.toLowerCase());
+                                if (matchedAirport) {
+                                    currentIataCodeTo = matchedAirport.iata;
+                                    console.log('Matched IATA Code:', currentIataCodeTo);
+                                    const searchFlightsButton = document.getElementById('searchFlightsButton');
+                                    searchFlightsButton.onclick = function() {
+                                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+                                    };
+                                    searchFlightsButton.style.display = 'block'; // Show the button
+                                } else {
+                                    console.warn('No matching airport found for city:', city);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                if (event === 'error' && data.error) {
+                    console.error('Error from backend:', data.error);
+                    alert('Error fetching suggestions: ' + data.error);
+                    loader.style.display = 'none'; // Hide the loader
+                    submitButton.disabled = false; // Enable the button
+                    submitButton.innerText = 'Get Suggestion'; // Revert button text
                 }
             }
         }

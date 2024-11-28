@@ -37,7 +37,7 @@ app.post('/suggest-destination', async (req, res) => {
         return res.status(400).json({ error: 'Request body or preferences are missing' });
     }
 
-    const prompt = `Suggest a travel destination based on the following preferences. Start the response with the city and country name in the format 'City, Country'. Follow this with a detailed explanation but do not repeat the city and country in the explanation. Do not suggest any of the following destinations: ${previousSuggestions.join(', ')}.\n` +
+    const prompt = `Suggest a travel destination based on the following preferences. Start the response with the city and country name in the format 'City, Country'. Follow this with a detailed explanation. Do not suggest any of the following destinations: ${previousSuggestions.join(', ')}.\n` +
                    `Destination type: ${preferences.destination_type}\n` +
                    `Activities: ${preferences.activity}\n` +
                    `Climate: ${preferences.climate}\n` +
@@ -56,7 +56,7 @@ app.post('/suggest-destination', async (req, res) => {
         // Flush the headers to establish SSE with the client
         res.flushHeaders();
 
-        // Make a streaming request to OpenAI
+        // Make a streaming request to OpenAI using native fetch
         const openaiResponse = await fetch(openaiEndpoint, {
             method: 'POST',
             headers: {
@@ -76,7 +76,7 @@ app.post('/suggest-destination', async (req, res) => {
         if (!openaiResponse.ok) {
             const errorData = await openaiResponse.text();
             console.error('OpenAI API Error:', errorData);
-            sendSSE(res, { error: 'Failed to fetch from OpenAI API' });
+            sendSSE(res, { error: 'Failed to fetch from OpenAI API' }, 'error');
             res.end();
             return;
         }
@@ -84,8 +84,7 @@ app.post('/suggest-destination', async (req, res) => {
         const reader = openaiResponse.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let isSuggestionSent = false;
-        let suggestionBuffer = ''; // To accumulate suggestion chunks
+        let fullResponseText = '';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -112,29 +111,9 @@ app.post('/suggest-destination', async (req, res) => {
                         const content = parsed.choices[0].delta.content;
 
                         if (content) {
-                            if (!isSuggestionSent) {
-                                // Accumulate suggestion until a comma is found
-                                suggestionBuffer += content;
-                                const commaIndex = suggestionBuffer.indexOf(',');
-
-                                if (commaIndex !== -1) {
-                                    // Extract suggestion up to and including the comma
-                                    const suggestion = suggestionBuffer.slice(0, commaIndex + 1).trim();
-                                    sendSSE(res, { suggestion }, 'suggestion');
-                                    isSuggestionSent = true;
-
-                                    // Extract any remaining content after the comma
-                                    const remainingContent = suggestionBuffer.slice(commaIndex + 1).trim();
-                                    if (remainingContent.length > 0) {
-                                        sendSSE(res, { full_response: remainingContent }, 'full_response');
-                                    }
-                                }
-                                // If comma not found yet, continue accumulating
-                            } else {
-                                // Subsequent chunks: Full response (incremental)
-                                const fullResponseData = { full_response: content };
-                                sendSSE(res, fullResponseData, 'full_response');
-                            }
+                            // Send all content as 'full_response' events
+                            sendSSE(res, { full_response: content }, 'full_response');
+                            fullResponseText += content;
                         }
                     } catch (err) {
                         console.error('Error parsing OpenAI stream chunk:', err);
@@ -149,7 +128,7 @@ app.post('/suggest-destination', async (req, res) => {
 
     } catch (error) {
         console.error('Error:', error);
-        sendSSE(res, { error: 'Error generating response from OpenAI API' });
+        sendSSE(res, { error: 'Error generating response from OpenAI API' }, 'error');
         res.end();
     }
 });
