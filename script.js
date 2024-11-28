@@ -1,6 +1,7 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Site loaded!');
     var inputs = document.querySelectorAll('input, select');
     
     // Loop through each input and select element
