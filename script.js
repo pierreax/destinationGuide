@@ -86,7 +86,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     console.log('Request Body:', requestBody); // Logging the request body
 
     // Handle Server-Sent Events (SSE)
-    const eventSource = new EventSource('/suggest-destination'); // Ensure the server is streaming data to this endpoint
+    const eventSource = new EventSource(`/stream-suggestions?preferences=${encodeURIComponent(JSON.stringify(preferences))}`); // Correct SSE endpoint
 
     eventSource.onopen = function() {
         loader.style.display = 'none'; // Hide loader once the connection is open

@@ -80,8 +80,7 @@ app.get('/stream-suggestions', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    // Stream suggestions progressively to the front-end
-    // You can send incremental responses using res.write()
+    // Send initial suggestion to the front-end
     res.write(`data: ${JSON.stringify({ suggestion: "Initial suggestion from server" })}\n\n`);
 
     // Simulate sending further data (full response, etc.)
