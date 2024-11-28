@@ -85,6 +85,7 @@ app.post('/suggest-destination', async (req, res) => {
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
         let isSuggestionSent = false;
+        let suggestionBuffer = ''; // To accumulate suggestion chunks
 
         while (true) {
             const { done, value } = await reader.read();
@@ -101,7 +102,7 @@ app.post('/suggest-destination', async (req, res) => {
                     const dataStr = line.replace(/^data: /, '').trim();
                     if (dataStr === '[DONE]') {
                         // End of stream
-                        res.write('event: end\ndata: {}\n\n');
+                        sendSSE(res, {}, 'end');
                         res.end();
                         return;
                     }
@@ -112,11 +113,23 @@ app.post('/suggest-destination', async (req, res) => {
 
                         if (content) {
                             if (!isSuggestionSent) {
-                                // First chunk: Suggestion
-                                const suggestion = content.trim();
-                                const suggestionData = { suggestion };
-                                sendSSE(res, suggestionData, 'suggestion');
-                                isSuggestionSent = true;
+                                // Accumulate suggestion until a comma is found
+                                suggestionBuffer += content;
+                                const commaIndex = suggestionBuffer.indexOf(',');
+
+                                if (commaIndex !== -1) {
+                                    // Extract suggestion up to and including the comma
+                                    const suggestion = suggestionBuffer.slice(0, commaIndex + 1).trim();
+                                    sendSSE(res, { suggestion }, 'suggestion');
+                                    isSuggestionSent = true;
+
+                                    // Extract any remaining content after the comma
+                                    const remainingContent = suggestionBuffer.slice(commaIndex + 1).trim();
+                                    if (remainingContent.length > 0) {
+                                        sendSSE(res, { full_response: remainingContent }, 'full_response');
+                                    }
+                                }
+                                // If comma not found yet, continue accumulating
                             } else {
                                 // Subsequent chunks: Full response (incremental)
                                 const fullResponseData = { full_response: content };
@@ -131,7 +144,7 @@ app.post('/suggest-destination', async (req, res) => {
         }
 
         // After stream ends
-        res.write('event: end\ndata: {}\n\n');
+        sendSSE(res, {}, 'end');
         res.end();
 
     } catch (error) {
