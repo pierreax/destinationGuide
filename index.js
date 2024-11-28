@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -15,6 +16,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Initial suggestion request (POST)
 app.post('/suggest-destination', async (req, res) => {
     const preferences = req.body.preferences;
     const previousSuggestions = req.body.previousSuggestions || [];
@@ -60,23 +62,33 @@ app.post('/suggest-destination', async (req, res) => {
         const [cityCountry, ...rest] = fullResponse.split('\n');
         const fullResponseWithoutCityCountry = rest.join('\n').trim();
 
-        // Streaming response to the front-end
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-
-        // Send city and country first
-        res.write(`data: ${JSON.stringify({ suggestion: cityCountry.trim() })}\n\n`);
-
-        // Then send the rest of the response
-        res.write(`data: ${JSON.stringify({ full_response: fullResponseWithoutCityCountry })}\n\n`);
-        res.end();
+        // Send initial city and country response
+        res.json({ suggestion: cityCountry.trim(), full_response: fullResponseWithoutCityCountry });
 
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Error generating response.' });
     }
+});
+
+// SSE route for continuous streaming (GET)
+app.get('/stream-suggestions', async (req, res) => {
+    const preferences = req.query.preferences;  // Assuming you can send preferences via query parameters or adjust based on the actual logic
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // Stream suggestions progressively to the front-end
+    // You can send incremental responses using res.write()
+    res.write(`data: ${JSON.stringify({ suggestion: "Initial suggestion from server" })}\n\n`);
+
+    // Simulate sending further data (full response, etc.)
+    setTimeout(() => {
+        res.write(`data: ${JSON.stringify({ full_response: "Detailed explanation after city/country" })}\n\n`);
+        res.end();  // Close the stream
+    }, 2000);  // Wait 2 seconds before sending the full response
 });
 
 app.listen(port, () => {
