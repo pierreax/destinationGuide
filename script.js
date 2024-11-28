@@ -86,7 +86,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     console.log('Request Body:', requestBody); // Logging the request body
 
     // First request to get city and country
-    fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsCityCountry?code=_7ndc8Y-t5DFhdw0iljB1u5aKl6Y-R4M_WgOB_pXMxL5AzFuJm_40Q%3D%3D', {
+    fetch('/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -99,85 +99,69 @@ document.getElementById('submitButton').addEventListener('click', async function
             submitButton.disabled = false; // Enable the button
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
-        return response.json(); // Get the JSON response
-    })
-    .then(data => {
-        console.log('Initial Response data:', data); // Logging initial response data
 
-        if (!previousSuggestions.includes(data.suggestion)) {
-            previousSuggestions.push(data.suggestion);
-            sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
+        // Handle Server-Sent Events (SSE)
+        const eventSource = new EventSource('/suggest-destination', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
 
-            document.getElementById('suggestion').innerText = data.suggestion;
-            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
-            loader.style.display = 'none'; // Hide the loader
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received suggestion:', data);
 
-            // Change button text after displaying city and country
-            submitButton.innerText = 'Suggest Something Else';
+            if (data.suggestion) {
+                if (!previousSuggestions.includes(data.suggestion)) {
+                    previousSuggestions.push(data.suggestion);
+                    sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
-            // Show the additional information headers
-            document.getElementById('additionalInfoHeader').style.display = 'block';
-            document.getElementById('generateInfoHeader').style.display = 'block';
+                    document.getElementById('suggestion').innerText = data.suggestion;
+                    document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
+                    loader.style.display = 'none'; // Hide the loader
 
-            // Load the airport data to create the link dynamically
-            loadAirportsData().then(airports => {
-                const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
-                if (matchedAirport) {
-                    currentIataCodeTo = matchedAirport.iata;
-                    console.log('Creating link with ',currentIataCodeTo)
-                    const searchFlightsButton = document.getElementById('searchFlightsButton');
-                    searchFlightsButton.onclick = function() {
-                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                    };
-                    searchFlightsButton.style.display = 'block'; // Show the button
+                    // Change button text after displaying city and country
+                    submitButton.innerText = 'Suggest Something Else';
+
+                    // Show the additional information headers
+                    document.getElementById('additionalInfoHeader').style.display = 'block';
+                    document.getElementById('generateInfoHeader').style.display = 'block';
+
+                    // Load the airport data to create the link dynamically
+                    loadAirportsData().then(airports => {
+                        const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
+                        const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
+                        if (matchedAirport) {
+                            currentIataCodeTo = matchedAirport.iata;
+                            console.log('Creating link with ', currentIataCodeTo)
+                            const searchFlightsButton = document.getElementById('searchFlightsButton');
+                            searchFlightsButton.onclick = function() {
+                                window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+                            };
+                            searchFlightsButton.style.display = 'block'; // Show the button
+                        }
+                    });
                 }
-            });
+            }
 
-            // Follow-up request for full explanation
-            const followUpRequestBody = {
-                cityCountry: data.suggestion,
-                preferences: preferences
-            };
+            if (data.full_response) {
+                const fullResponseTextarea = document.getElementById('fullResponse');
+                fullResponseTextarea.value = data.full_response;
+                document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
+                resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
+            }
+        };
 
-            return fetch('https://flightwebsiteapp.azurewebsites.net/api/destinationsFullExplanation?code=rAK_wIArJb_VelW8sVILecWGSD8oFj-mdhaKljLtLedLAzFukWLJ6A%3D%3D', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(followUpRequestBody)
-            });
-        } else {
-            document.getElementById('suggestion').innerText = 'Suggestion was already provided. Please try again.';
-            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even if it was already provided
+        eventSource.onerror = function(error) {
+            loader.style.display = 'none'; // Hide the loader
+            console.error('Error:', error);
+            document.getElementById('suggestion').innerText = 'Error fetching suggestion';
+            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even on error
             document.getElementById('fullResponse').innerText = '';
             submitButton.innerText = 'Get Suggestion'; // Revert button text
-            loader.style.display = 'none'; // Hide the loader
             submitButton.disabled = false; // Enable the button
-            return null;
-        }
-    })
-    .then(response => {
-        if (response) {
-            if (!response.ok) {
-                submitButton.innerText = 'Get Suggestion'; // Revert button text
-                submitButton.disabled = false; // Enable the button
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-            return response.json();
-        }
-    })
-    .then(data => {
-        if (data) {
-            console.log('Follow-up Response data:', data); // Logging follow-up response data
-            const fullResponseTextarea = document.getElementById('fullResponse');
-            fullResponseTextarea.value = data.full_response;
-            document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
-            resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
-        }
-        loader.style.display = 'none'; // Hide the loader
-        submitButton.disabled = false; // Enable the button
+        };
     })
     .catch(error => {
         loader.style.display = 'none'; // Hide the loader
