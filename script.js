@@ -117,6 +117,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
+        let isSuggestionReceived = false; // Flag to track if suggestion is received
 
         while (true) {
             const { done, value } = await reader.read();
@@ -141,7 +142,9 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                             document.getElementById('suggestion').innerText = data.suggestion;
                             document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
-                            loader.style.display = 'none'; // Hide the loader
+                            
+                            // Hide the loader after receiving the first chunk (suggestion)
+                            loader.style.display = 'none';
 
                             // Change button text after displaying city and country
                             submitButton.innerText = 'Suggest Something Else';
@@ -151,25 +154,28 @@ document.getElementById('submitButton').addEventListener('click', async function
                             document.getElementById('generateInfoHeader').style.display = 'block';
 
                             // Load the airport data to create the link dynamically
-                            const airports = await loadAirportsData();
-                            const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                            const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                            const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
-                            if (matchedAirport) {
-                                currentIataCodeTo = matchedAirport.iata;
-                                console.log('Creating link with ', currentIataCodeTo)
-                                const searchFlightsButton = document.getElementById('searchFlightsButton');
-                                searchFlightsButton.onclick = function() {
-                                    window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                                };
-                                searchFlightsButton.style.display = 'block'; // Show the button
-                            }
+                            loadAirportsData().then(airports => {
+                                const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
+                                const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
+                                if (matchedAirport) {
+                                    currentIataCodeTo = matchedAirport.iata;
+                                    console.log('Creating link with ', currentIataCodeTo)
+                                    const searchFlightsButton = document.getElementById('searchFlightsButton');
+                                    searchFlightsButton.onclick = function() {
+                                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+                                    };
+                                    searchFlightsButton.style.display = 'block'; // Show the button
+                                }
+                            });
+
+                            isSuggestionReceived = true; // Mark that suggestion has been received
                         }
                     }
 
                     if (data.full_response) {
                         const fullResponseTextarea = document.getElementById('fullResponse');
-                        fullResponseTextarea.value = data.full_response;
+                        fullResponseTextarea.value += data.full_response + '\n'; // Append to existing content
                         document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                         resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                     }
@@ -193,7 +199,9 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                         document.getElementById('suggestion').innerText = data.suggestion;
                         document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
-                        loader.style.display = 'none'; // Hide the loader
+                        
+                        // Hide the loader after receiving the suggestion
+                        loader.style.display = 'none';
 
                         // Change button text after displaying city and country
                         submitButton.innerText = 'Suggest Something Else';
@@ -203,25 +211,28 @@ document.getElementById('submitButton').addEventListener('click', async function
                         document.getElementById('generateInfoHeader').style.display = 'block';
 
                         // Load the airport data to create the link dynamically
-                        const airports = await loadAirportsData();
-                        const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                        const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
-                        if (matchedAirport) {
-                            currentIataCodeTo = matchedAirport.iata;
-                            console.log('Creating link with ', currentIataCodeTo)
-                            const searchFlightsButton = document.getElementById('searchFlightsButton');
-                            searchFlightsButton.onclick = function() {
-                                window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                            };
-                            searchFlightsButton.style.display = 'block'; // Show the button
-                        }
+                        loadAirportsData().then(airports => {
+                            const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
+                            const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
+                            if (matchedAirport) {
+                                currentIataCodeTo = matchedAirport.iata;
+                                console.log('Creating link with ', currentIataCodeTo)
+                                const searchFlightsButton = document.getElementById('searchFlightsButton');
+                                searchFlightsButton.onclick = function() {
+                                    window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+                                };
+                                searchFlightsButton.style.display = 'block'; // Show the button
+                            }
+                        });
+
+                        isSuggestionReceived = true; // Mark that suggestion has been received
                     }
                 }
 
                 if (data.full_response) {
                     const fullResponseTextarea = document.getElementById('fullResponse');
-                    fullResponseTextarea.value = data.full_response;
+                    fullResponseTextarea.value += data.full_response + '\n'; // Append to existing content
                     document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                     resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                 }

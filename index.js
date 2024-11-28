@@ -2,11 +2,15 @@
 
 const express = require('express');
 const path = require('path');
+const compression = require('compression');
 const app = express();
 const port = process.env.PORT || 8080;
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
+// Use compression middleware to enable res.flush()
+app.use(compression());
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname)));
@@ -16,7 +20,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// POST route for handling initial suggestion request with streaming
+// POST route for handling suggestion requests with streaming
 app.post('/suggest-destination', async (req, res) => {
     const preferences = req.body.preferences;
     const previousSuggestions = req.body.previousSuggestions || [];
@@ -36,59 +40,92 @@ app.post('/suggest-destination', async (req, res) => {
     const openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
 
     try {
-        // Make API request to OpenAI (GPT-4)
-        const response = await fetch(openaiEndpoint, {
+        // Make a streaming request to OpenAI
+        const openaiResponse = await fetch(openaiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-                model: "gpt-4-turbo",
+                model: "gpt-4",
                 messages: [
                     { role: "system", content: "You are a helpful assistant." },
                     { role: "user", content: prompt }
-                ]
+                ],
+                stream: true // Enable streaming
             })
         });
 
-        if (!response.ok) {
-            const errorData = await response.text();
+        if (!openaiResponse.ok) {
+            const errorData = await openaiResponse.text();
             console.error('OpenAI API Error:', errorData);
-            throw new Error('Failed to fetch from OpenAI API');
+            return res.status(500).json({ error: 'Failed to fetch from OpenAI API' });
         }
-
-        // Assuming OpenAI sends a single response
-        const responseData = await response.json();
-        const fullResponse = responseData.choices[0].message.content;
-        const [cityCountry, ...rest] = fullResponse.split('\n');
-        const fullResponseWithoutCityCountry = rest.join('\n').trim();
 
         // Set headers for chunked transfer
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Transfer-Encoding', 'chunked');
 
-        // Create a readable stream
-        const { Readable } = require('stream');
-        const stream = new Readable({
-            read() {}
-        });
+        // Listen to OpenAI's streamed response
+        const reader = openaiResponse.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
 
-        // Push suggestion
-        const suggestionChunk = JSON.stringify({ suggestion: cityCountry.trim() }) + '\n';
-        stream.push(suggestionChunk);
-        res.write(suggestionChunk);
+        // Helper function to send parsed data to the client
+        const sendData = (data) => {
+            res.write(JSON.stringify(data) + '\n');
+            if (res.flush) {
+                res.flush(); // Flush the response to ensure immediate delivery
+            }
+        };
 
-        // Simulate some delay (optional)
-        // await new Promise(resolve => setTimeout(resolve, 1000));
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        // Push full_response
-        const fullResponseChunk = JSON.stringify({ full_response: fullResponseWithoutCityCountry }) + '\n';
-        stream.push(fullResponseChunk);
-        res.write(fullResponseChunk);
+            buffer += decoder.decode(value, { stream: true });
 
-        // End the stream
-        stream.push(null);
+            // Split the buffer by newline to process each event
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // Save the last incomplete line
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.replace(/^data: /, '').trim();
+                    if (dataStr === '[DONE]') {
+                        // End of stream
+                        res.end();
+                        return;
+                    }
+
+                    try {
+                        const parsed = JSON.parse(dataStr);
+                        const content = parsed.choices[0].delta.content;
+
+                        if (content) {
+                            // Check if it's the first line (suggestion)
+                            if (!res.locals.suggestionSent) {
+                                const suggestion = content.trim();
+                                sendData({ suggestion });
+                                res.locals.suggestionSent = true;
+                            } else {
+                                // Append to full_response
+                                if (!res.locals.fullResponse) {
+                                    res.locals.fullResponse = '';
+                                }
+                                res.locals.fullResponse += content;
+                                sendData({ full_response: res.locals.fullResponse.trim() });
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error parsing OpenAI stream chunk:', err);
+                    }
+                }
+            }
+        }
+
+        // After stream ends
         res.end();
 
     } catch (error) {
