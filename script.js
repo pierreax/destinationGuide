@@ -86,7 +86,7 @@ document.getElementById('submitButton').addEventListener('click', async function
     console.log('Request Body:', requestBody); // Logging the request body
 
     // First request to get city and country
-    fetch('/', {
+    fetch('/suggest-destination', { // Use the correct endpoint here
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
