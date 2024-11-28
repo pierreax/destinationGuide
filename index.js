@@ -80,6 +80,14 @@ app.post('/suggest-destination', async (req, res) => {
         let buffer = '';
         let isSuggestionSent = false;
 
+        // Helper function to send parsed data to the client
+        const sendData = (data) => {
+            res.write(JSON.stringify(data) + '\n');
+            if (res.flush) {
+                res.flush(); // Flush the response to ensure immediate delivery
+            }
+        };
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -108,14 +116,12 @@ app.post('/suggest-destination', async (req, res) => {
                                 // First chunk: Suggestion
                                 const suggestion = content.trim();
                                 const suggestionData = { suggestion };
-                                res.write(JSON.stringify(suggestionData) + '\n');
-                                res.flush(); // Flush the chunk to the client
+                                sendData(suggestionData);
                                 isSuggestionSent = true;
                             } else {
-                                // Subsequent chunks: Full response
+                                // Subsequent chunks: Full response (incremental)
                                 const fullResponseData = { full_response: content };
-                                res.write(JSON.stringify(fullResponseData) + '\n');
-                                res.flush(); // Flush the chunk to the client
+                                sendData(fullResponseData);
                             }
                         }
                     } catch (err) {
@@ -133,6 +139,7 @@ app.post('/suggest-destination', async (req, res) => {
         res.status(500).json({ error: 'Error generating response from OpenAI API' });
     }
 });
+
 
 // Start the server
 app.listen(port, () => {

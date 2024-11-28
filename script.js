@@ -182,7 +182,7 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                     if (data.full_response) {
                         const fullResponseTextarea = document.getElementById('fullResponse');
-                        fullResponseTextarea.value += data.full_response; // Append to existing content
+                        fullResponseTextarea.value += data.full_response; // Append incremental content
                         document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                         resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                     }
@@ -239,7 +239,7 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                 if (data.full_response) {
                     const fullResponseTextarea = document.getElementById('fullResponse');
-                    fullResponseTextarea.value += data.full_response; // Append to existing content
+                    fullResponseTextarea.value += data.full_response; // Append incremental content
                     document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                     resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                 }
