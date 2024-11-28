@@ -152,15 +152,14 @@ document.getElementById('submitButton').addEventListener('click', async function
         }
     };
 
-    eventSource.onerror = function(error) {
+    eventSource.onerror = function(event) {
+        console.error('EventSource failed:', event);
+        console.log('EventSource state:', eventSource.readyState); // Log the readyState
+        alert('Error with EventSource. Check the server logs or network tab.');
         loader.style.display = 'none'; // Hide the loader
-        console.error('Error:', error);
-        document.getElementById('suggestion').innerText = 'Error fetching suggestion';
-        document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field even on error
-        document.getElementById('fullResponse').innerText = '';
-        submitButton.innerText = 'Get Suggestion'; // Revert button text
         submitButton.disabled = false; // Enable the button
-    };
+        submitButton.innerText = 'Get Suggestion'; // Revert button text
+    };    
 });
 
 // This event listener ensures the "Search Flights" button only opens a new tab with the URL.
