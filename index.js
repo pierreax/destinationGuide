@@ -1,3 +1,5 @@
+// server.js
+
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -14,21 +16,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// SSE route
-app.get('/stream-suggestions', async (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();  // Send the headers to the client
-
-    // Immediately send both suggestion and full response
-    res.write('data: {"suggestion": "Initial suggestion from server"}\n\n');
-    res.write('data: {"full_response": "Detailed explanation after city/country"}\n\n');
-    
-    res.end();  // End the stream
-});
-
-// POST route for handling initial suggestion request
+// POST route for handling initial suggestion request with streaming
 app.post('/suggest-destination', async (req, res) => {
     const preferences = req.body.preferences;
     const previousSuggestions = req.body.previousSuggestions || [];
@@ -64,19 +52,44 @@ app.post('/suggest-destination', async (req, res) => {
             })
         });
 
-        const responseData = await response.json();
-
         if (!response.ok) {
+            const errorData = await response.text();
+            console.error('OpenAI API Error:', errorData);
             throw new Error('Failed to fetch from OpenAI API');
         }
 
-        // Split the response and send initial suggestion and full response separately
+        // Assuming OpenAI sends a single response
+        const responseData = await response.json();
         const fullResponse = responseData.choices[0].message.content;
         const [cityCountry, ...rest] = fullResponse.split('\n');
         const fullResponseWithoutCityCountry = rest.join('\n').trim();
 
-        // Send the city and country suggestion
-        res.json({ suggestion: cityCountry.trim(), full_response: fullResponseWithoutCityCountry });
+        // Set headers for chunked transfer
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Transfer-Encoding', 'chunked');
+
+        // Create a readable stream
+        const { Readable } = require('stream');
+        const stream = new Readable({
+            read() {}
+        });
+
+        // Push suggestion
+        const suggestionChunk = JSON.stringify({ suggestion: cityCountry.trim() }) + '\n';
+        stream.push(suggestionChunk);
+        res.write(suggestionChunk);
+
+        // Simulate some delay (optional)
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Push full_response
+        const fullResponseChunk = JSON.stringify({ full_response: fullResponseWithoutCityCountry }) + '\n';
+        stream.push(fullResponseChunk);
+        res.write(fullResponseChunk);
+
+        // End the stream
+        stream.push(null);
+        res.end();
 
     } catch (error) {
         console.error('Error:', error);
