@@ -116,6 +116,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
+        loader.style.display = 'none'; // Hide the loader
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
