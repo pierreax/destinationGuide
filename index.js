@@ -2,17 +2,12 @@
 
 const express = require('express');
 const path = require('path');
-const compression = require('compression'); // For response compression
 const morgan = require('morgan'); // For logging
 const app = express();
 const port = process.env.PORT || 8080;
 
 // Use morgan for logging HTTP requests
 app.use(morgan('combined'));
-
-// Use compression middleware
-// IMPORTANT: Apply compression only to non-streaming routes to prevent interference
-app.use(compression());
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -25,7 +20,15 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// POST route for handling suggestion requests with streaming
+// Helper function to send SSE-formatted data
+const sendSSE = (res, data, event = null) => {
+    if (event) {
+        res.write(`event: ${event}\n`);
+    }
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+};
+
+// POST route for handling suggestion requests with SSE
 app.post('/suggest-destination', async (req, res) => {
     const preferences = req.body.preferences;
     const previousSuggestions = req.body.previousSuggestions || [];
@@ -45,6 +48,14 @@ app.post('/suggest-destination', async (req, res) => {
     const openaiEndpoint = 'https://api.openai.com/v1/chat/completions';
 
     try {
+        // Set headers for SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        // Flush the headers to establish SSE with the client
+        res.flushHeaders();
+
         // Make a streaming request to OpenAI
         const openaiResponse = await fetch(openaiEndpoint, {
             method: 'POST',
@@ -65,28 +76,15 @@ app.post('/suggest-destination', async (req, res) => {
         if (!openaiResponse.ok) {
             const errorData = await openaiResponse.text();
             console.error('OpenAI API Error:', errorData);
-            return res.status(500).json({ error: 'Failed to fetch from OpenAI API' });
+            sendSSE(res, { error: 'Failed to fetch from OpenAI API' });
+            res.end();
+            return;
         }
 
-        // Set headers for chunked transfer without compression
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.setHeader('Transfer-Encoding', 'chunked');
-        // Disable compression for this route to prevent buffering
-        res.setHeader('Content-Encoding', 'identity');
-
-        // Listen to OpenAI's streamed response
         const reader = openaiResponse.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
         let isSuggestionSent = false;
-
-        // Helper function to send parsed data to the client
-        const sendData = (data) => {
-            res.write(JSON.stringify(data) + '\n');
-            if (res.flush) {
-                res.flush(); // Flush the response to ensure immediate delivery
-            }
-        };
 
         while (true) {
             const { done, value } = await reader.read();
@@ -103,6 +101,7 @@ app.post('/suggest-destination', async (req, res) => {
                     const dataStr = line.replace(/^data: /, '').trim();
                     if (dataStr === '[DONE]') {
                         // End of stream
+                        res.write('event: end\ndata: {}\n\n');
                         res.end();
                         return;
                     }
@@ -116,12 +115,12 @@ app.post('/suggest-destination', async (req, res) => {
                                 // First chunk: Suggestion
                                 const suggestion = content.trim();
                                 const suggestionData = { suggestion };
-                                sendData(suggestionData);
+                                sendSSE(res, suggestionData, 'suggestion');
                                 isSuggestionSent = true;
                             } else {
                                 // Subsequent chunks: Full response (incremental)
                                 const fullResponseData = { full_response: content };
-                                sendData(fullResponseData);
+                                sendSSE(res, fullResponseData, 'full_response');
                             }
                         }
                     } catch (err) {
@@ -132,14 +131,15 @@ app.post('/suggest-destination', async (req, res) => {
         }
 
         // After stream ends
+        res.write('event: end\ndata: {}\n\n');
         res.end();
 
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ error: 'Error generating response from OpenAI API' });
+        sendSSE(res, { error: 'Error generating response from OpenAI API' });
+        res.end();
     }
 });
-
 
 // Start the server
 app.listen(port, () => {

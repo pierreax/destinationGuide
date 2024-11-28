@@ -124,7 +124,7 @@ document.getElementById('submitButton').addEventListener('click', async function
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let isSuggestionReceived = false;
+        let fullResponseText = '';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -132,74 +132,26 @@ document.getElementById('submitButton').addEventListener('click', async function
 
             buffer += decoder.decode(value, { stream: true });
 
-            // Split the buffer by newline to process complete chunks
-            let parts = buffer.split('\n');
+            // Split the buffer by double newline to get complete SSE events
+            let parts = buffer.split('\n\n');
             buffer = parts.pop(); // Save the last incomplete part
 
             for (let part of parts) {
                 if (part.trim() === '') continue;
-                try {
-                    const data = JSON.parse(part);
-                    console.log('Received chunk:', data);
 
-                    if (data.suggestion) {
-                        if (!previousSuggestions.includes(data.suggestion)) {
-                            previousSuggestions.push(data.suggestion);
-                            sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
+                const lines = part.split('\n');
+                let event = null;
+                let data = null;
 
-                            document.getElementById('suggestion').innerText = data.suggestion;
-                            document.getElementById('suggestion-container').style.display = 'block'; // Show suggestion field
-                            
-                            // Hide the loader after receiving the suggestion
-                            loader.style.display = 'none';
-
-                            // Change button text after displaying city and country
-                            submitButton.innerText = 'Suggest Something Else';
-
-                            // Show the additional information headers
-                            document.getElementById('additionalInfoHeader').style.display = 'block';
-                            document.getElementById('generateInfoHeader').style.display = 'block';
-
-                            // Load the airport data to create the link dynamically
-                            loadAirportsData().then(airports => {
-                                const suggestionCity = data.suggestion.split(",")[0].trim(); // Extract the city from the suggestion
-                                const normalizedSuggestionCity = suggestionCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                const matchedAirport = airports.find(airport => airport.city.includes(normalizedSuggestionCity));
-                                if (matchedAirport) {
-                                    currentIataCodeTo = matchedAirport.iata;
-                                    console.log('Creating link with ', currentIataCodeTo)
-                                    const searchFlightsButton = document.getElementById('searchFlightsButton');
-                                    searchFlightsButton.onclick = function() {
-                                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                                    };
-                                    searchFlightsButton.style.display = 'block'; // Show the button
-                                }
-                            });
-
-                            isSuggestionReceived = true; // Mark that suggestion has been received
-                        }
+                for (let line of lines) {
+                    if (line.startsWith('event: ')) {
+                        event = line.replace('event: ', '').trim();
+                    } else if (line.startsWith('data: ')) {
+                        data = JSON.parse(line.replace('data: ', '').trim());
                     }
-
-                    if (data.full_response) {
-                        const fullResponseTextarea = document.getElementById('fullResponse');
-                        fullResponseTextarea.value += data.full_response; // Append incremental content
-                        document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
-                        resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
-                    }
-
-                } catch (err) {
-                    console.error('Error parsing chunk:', err);
                 }
-            }
-        }
 
-        // Handle any remaining buffer
-        if (buffer.trim() !== '') {
-            try {
-                const data = JSON.parse(buffer);
-                console.log('Received final chunk:', data);
-
-                if (data.suggestion) {
+                if (event === 'suggestion' && data.suggestion) {
                     if (!previousSuggestions.includes(data.suggestion)) {
                         previousSuggestions.push(data.suggestion);
                         sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
@@ -232,25 +184,24 @@ document.getElementById('submitButton').addEventListener('click', async function
                                 searchFlightsButton.style.display = 'block'; // Show the button
                             }
                         });
-
-                        isSuggestionReceived = true; // Mark that suggestion has been received
                     }
                 }
 
-                if (data.full_response) {
+                if (event === 'full_response' && data.full_response) {
                     const fullResponseTextarea = document.getElementById('fullResponse');
-                    fullResponseTextarea.value += data.full_response; // Append incremental content
+                    fullResponseText += data.full_response;
+                    fullResponseTextarea.value = fullResponseText; // Overwrite to prevent duplication
                     document.getElementById('fullResponseForm').style.display = 'block'; // Show the full response form
                     resizeTextarea(fullResponseTextarea); // Resize the textarea to fit content
                 }
 
-            } catch (err) {
-                console.error('Error parsing final chunk:', err);
+                if (event === 'end') {
+                    // Connection has ended
+                    console.log('Streaming completed.');
+                    submitButton.disabled = false; // Enable the button
+                }
             }
         }
-
-        loader.style.display = 'none'; // Hide loader
-        submitButton.disabled = false; // Enable the button
 
     } catch (error) {
         console.error('Error:', error);
