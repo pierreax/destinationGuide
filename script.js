@@ -166,6 +166,9 @@ document.getElementById('submitButton').addEventListener('click', async function
                     // After streaming is complete, extract City
                     city = fullResponseText.split(',')[0].trim();
                     console.log('Extracted City:', city);
+
+                    // Show the searchFlightsButton
+                    document.getElementById('searchFlightsButton').style.display = 'block';
                 }
 
                 if (event === 'error' && data.error) {
