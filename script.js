@@ -30,40 +30,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Load airport data from 'airports.txt'
-let cachedAirportData = null;
+// Global variable to store City
 let city ='';
 
-async function loadAirportsData() {
-    if (cachedAirportData) {
-        return cachedAirportData;
-    }
-
-    const response = await fetch('airports.txt');
-    const text = await response.text();
-    const airportLines = text.split('\n');
-    const airportData = [];
-
-    // Process each line of the airports data
-    airportLines.forEach(line => {
-        const [iata, city] = line.split(' - ');
-        if (iata && city) {
-            // Normalize the city name to remove accents
-            const normalizedCity = city.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            airportData.push({ iata: iata.trim(), city: normalizedCity });
-        }
-    });
-
-    cachedAirportData = airportData; // Cache the data
-    return airportData;
-}
 
 // Resize textarea to fit content
 function resizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
-
 
 
 // Handle form submission
@@ -169,6 +144,9 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                     // Show the searchFlightsButton
                     document.getElementById('searchFlightsButton').style.display = 'block';
+
+                    // Change button text after displaying first suggestion
+                    submitButton.innerText = 'Suggest Something Else';
                 }
 
                 if (event === 'error' && data.error) {
