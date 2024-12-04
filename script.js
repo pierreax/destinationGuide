@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load airport data from 'airports.txt'
 let cachedAirportData = null;
+let city ='';
 
 async function loadAirportsData() {
     if (cachedAirportData) {
@@ -63,8 +64,7 @@ function resizeTextarea(textarea) {
     textarea.style.height = textarea.scrollHeight + 'px';
 }
 
-// Variable to store the current IATA code for flights
-let currentIataCodeTo = '';
+
 
 // Handle form submission
 document.getElementById('submitButton').addEventListener('click', async function(event) {
@@ -75,8 +75,8 @@ document.getElementById('submitButton').addEventListener('click', async function
     document.getElementById('fullResponse').value = '';
     document.getElementById('fullResponseForm').style.display = 'none';
 
-    // Clear iataCodeTo variable and hide the SearchFlightsButton
-    currentIataCodeTo = '';
+    // Clear city variable and hide the SearchFlightsButton
+    city = '';
     document.getElementById('searchFlightsButton').style.display = 'none';
 
     const loader = document.getElementById('loader');
@@ -163,33 +163,9 @@ document.getElementById('submitButton').addEventListener('click', async function
                     loader.style.display = 'none'; // Hide the loader
                     submitButton.disabled = false; // Enable the button
 
-                    // After streaming is complete, extract City and Country from fullResponseText
-                    const [firstSentence] = fullResponseText.split('.');
-                    if (firstSentence) {
-                        const cityCountry = firstSentence.trim();
-                        console.log('Extracted City, Country:', cityCountry);
-
-                        // Extract city from "City, Country"
-                        const [city, country] = cityCountry.split(',').map(part => part.trim());
-
-                        if (city && country) {
-                            // Load airport data to find IATA code
-                            loadAirportsData().then(airports => {
-                                const matchedAirport = airports.find(airport => airport.city.toLowerCase() === city.toLowerCase());
-                                if (matchedAirport) {
-                                    currentIataCodeTo = matchedAirport.iata;
-                                    console.log('Matched IATA Code:', currentIataCodeTo);
-                                    const searchFlightsButton = document.getElementById('searchFlightsButton');
-                                    searchFlightsButton.onclick = function() {
-                                        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
-                                    };
-                                    searchFlightsButton.style.display = 'block'; // Show the button
-                                } else {
-                                    console.warn('No matching airport found for city:', city);
-                                }
-                            });
-                        }
-                    }
+                    // After streaming is complete, extract City
+                    city = fullResponseText.split(',')[0].trim();
+                    console.log('Extracted City:', city);
                 }
 
                 if (event === 'error' && data.error) {
@@ -213,8 +189,8 @@ document.getElementById('submitButton').addEventListener('click', async function
 
 // This event listener ensures the "Search Flights" button only opens a new tab with the URL.
 document.getElementById('searchFlightsButton').addEventListener('click', function() {
-    if (currentIataCodeTo) {
-        console.log('Opening a new tab with ', currentIataCodeTo);
-        window.open(`https://www.robotize.no/flights?iataCodeTo=${currentIataCodeTo}`, '_blank'); // Open in new tab
+    if (city) {
+        console.log('Opening a new tab with ', city);
+        window.open(`https://www.robotize.no/flights?city=${encodeURIComponent(city)}`, '_blank');
     }
 });
