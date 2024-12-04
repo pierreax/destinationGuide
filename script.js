@@ -1,5 +1,3 @@
-// script.js
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Site loaded!');
     var inputs = document.querySelectorAll('input, select');
@@ -31,15 +29,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Global variable to store City
-let city ='';
-
+let city = '';
 
 // Resize textarea to fit content
 function resizeTextarea(textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
 }
-
 
 // Handle form submission
 document.getElementById('submitButton').addEventListener('click', async function(event) {
@@ -71,8 +67,10 @@ document.getElementById('submitButton').addEventListener('click', async function
 
     console.log('Preferences:', preferences);
 
+    // Get the previous suggestions from sessionStorage, or initialize an empty array if none exist
     let previousSuggestions = JSON.parse(sessionStorage.getItem('previousSuggestions')) || [];
     
+    // Create the requestBody object correctly
     const requestBody = {
         preferences: preferences,
         previousSuggestions: previousSuggestions
@@ -141,6 +139,14 @@ document.getElementById('submitButton').addEventListener('click', async function
                     // After streaming is complete, extract City
                     city = fullResponseText.split(',')[0].trim();
                     console.log('Extracted City:', city);
+
+                    // Add the current city to the previous suggestions list
+                    if (city) {
+                        previousSuggestions.push(city);  // Add the extracted city
+                    }
+
+                    // Save the updated suggestions back to sessionStorage
+                    sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
 
                     // Show the searchFlightsButton
                     document.getElementById('searchFlightsButton').style.display = 'block';
