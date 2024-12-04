@@ -132,7 +132,7 @@ document.getElementById('submitButton').addEventListener('click', async function
 
                 if (event === 'end') {
                     // Connection has ended
-                    console.log('Streaming completed.');
+                    console.log('Streaming completed!');
                     loader.style.display = 'none'; // Hide the loader
                     submitButton.disabled = false; // Enable the button
 
@@ -152,7 +152,6 @@ document.getElementById('submitButton').addEventListener('click', async function
                     document.getElementById('searchFlightsButton').style.display = 'block';
 
                     // Change button text after displaying first suggestion
-                    console.log('Changing the text in Submitbutton');
                     submitButton.innerText = 'Suggest Something Else';
                 }
 
