@@ -146,6 +146,7 @@ document.getElementById('submitButton').addEventListener('click', async function
                     document.getElementById('searchFlightsButton').style.display = 'block';
 
                     // Change button text after displaying first suggestion
+                    console.log('Changing the text in Submitbutton');
                     submitButton.innerText = 'Suggest Something Else';
                 }
 
