@@ -8,9 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     const fullResponseForm = document.getElementById('fullResponseForm');
     const fullResponseTextarea = document.getElementById('fullResponse');
-    const noResultsMessage = document.getElementById('noResultsMessage');
-    const resultsContainer = document.querySelector('.results-box'); // Assuming this is the container
-    const submitText = document.getElementById('submitText');
 
     let city = '';
 
@@ -66,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fullResponseTextarea.value = '';
         fullResponseForm.style.display = 'none';
         searchFlightsButton.style.display = 'none';
-        noResultsMessage.style.display = 'none';
 
         city = '';
         loader.style.display = 'block'; // Show the loader
