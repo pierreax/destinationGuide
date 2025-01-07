@@ -1,74 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Site loaded');
 
-    // Cache frequently accessed DOM elements
-    const form = document.getElementById('destinationForm');
+    // Cache the form and its elements
+    const destinationForm = document.getElementById('destinationForm');
     const submitButton = document.getElementById('submitButton');
-    const searchFlightsButton = document.getElementById('searchFlightsButton');
     const loader = document.getElementById('loader');
-    const fullResponseForm = document.getElementById('fullResponseForm');
     const fullResponseTextarea = document.getElementById('fullResponse');
+    const fullResponseForm = document.getElementById('fullResponseForm');
+    const searchFlightsButton = document.getElementById('searchFlightsButton');
 
+    // Event Delegation for focus and blur on input and select elements
+    destinationForm.addEventListener('focusin', (event) => {
+        const target = event.target;
+        if (target.matches('input, select')) {
+            const label = target.previousElementSibling;
+            if (label) {
+                label.classList.add('active');
+            }
+        }
+    });
+
+    destinationForm.addEventListener('focusout', (event) => {
+        const target = event.target;
+        if (target.matches('input, select')) {
+            const label = target.previousElementSibling;
+            if (label && !target.value) {
+                label.classList.remove('active');
+            }
+        }
+    });
+
+    // Initial check to float labels if input/select has a value
+    const inputs = destinationForm.querySelectorAll('input, select');
+    inputs.forEach((input) => {
+        const label = input.previousElementSibling;
+        if (label && input.value) {
+            label.classList.add('active');
+        }
+    });
+
+    // Global variable to store City
     let city = '';
 
-    /**
-     * Resize textarea to fit content
-     * @param {HTMLElement} textarea 
-     */
+    // Resize textarea to fit content
     const resizeTextarea = (textarea) => {
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
     };
 
-    /**
-     * Handle label animations using event delegation
-     */
-    const handleLabelAnimations = (event) => {
-        const { target } = event;
-        if (target.matches('input, select, textarea')) {
-            const label = target.previousElementSibling;
-            if (!label) return;
-
-            if (event.type === 'focus') {
-                label.classList.add('active');
-            } else if (event.type === 'blur') {
-                if (!target.value.trim()) {
-                    label.classList.remove('active');
-                }
-            }
-        }
-    };
-
-    // Attach event listeners for focus and blur using event delegation
-    form.addEventListener('focus', handleLabelAnimations, true);
-    form.addEventListener('blur', handleLabelAnimations, true);
-
-    // Initial check to float labels if inputs have values
-    const inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-        const label = input.previousElementSibling;
-        if (label && input.value.trim()) {
-            label.classList.add('active');
-        }
-    });
-
-    /**
-     * Handle form submission
-     */
-    const handleFormSubmit = async (event) => {
+    // Handle form submission
+    submitButton.addEventListener('click', async (event) => {
         event.preventDefault();
         console.log('Form submitted!');
 
-        // Hide previous responses and reset UI
+        // Clear previous full response
         fullResponseTextarea.value = '';
         fullResponseForm.style.display = 'none';
+
+        // Clear city variable and hide the SearchFlightsButton
+        city = '';
         searchFlightsButton.style.display = 'none';
 
-        city = '';
         loader.style.display = 'block'; // Show the loader
         submitButton.disabled = true; // Disable the button
 
-        const formData = new FormData(form);
+        const formData = new FormData(destinationForm);
         const preferences = {
             destination_type: formData.get('destination_type'),
             activity: formData.get('activity'),
@@ -79,12 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log('Preferences:', preferences);
 
-        // Retrieve previous suggestions from sessionStorage
-        const previousSuggestions = JSON.parse(sessionStorage.getItem('previousSuggestions')) || [];
+        // Get the previous suggestions from sessionStorage, or initialize an empty array if none exist
+        let previousSuggestions = JSON.parse(sessionStorage.getItem('previousSuggestions')) || [];
 
+        // Create the requestBody object correctly
         const requestBody = {
-            preferences,
-            previousSuggestions
+            preferences: preferences,
+            previousSuggestions: previousSuggestions
         };
 
         console.log('Request Body:', requestBody);
@@ -99,88 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
+                throw new Error('Network response was not ok');
             }
 
-            // Use EventSource for SSE if possible
-            if (typeof EventSource !== 'undefined') {
-                handleSSE(response);
-            } else {
-                // Fallback if EventSource is not supported
-                await handleSSEFallback(response);
-            }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let fullResponseText = '';
 
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error fetching suggestions. Please try again later.');
-            loader.style.display = 'none'; // Hide the loader
-            submitButton.disabled = false; // Enable the button
-            submitButton.innerText = 'Get Suggestion'; // Revert button text
-        }
-    };
-
-    /**
-     * Handle Server-Sent Events using EventSource
-     * @param {Response} response 
-     */
-    const handleSSE = (response) => {
-        // Since EventSource doesn't support POST natively, use a workaround or a polyfill
-        // For simplicity, assuming a GET endpoint that returns SSE
-        // If POST is required, consider using fetch with ReadableStream as done in fallback
-        const eventSource = new EventSource('/suggest-destination-sse');
-
-        let fullResponseText = '';
-
-        eventSource.addEventListener('full_response', (e) => {
-            const data = JSON.parse(e.data);
-            if (data.full_response) {
-                fullResponseText += data.full_response;
-                fullResponseTextarea.value = fullResponseText;
-                resizeTextarea(fullResponseTextarea);
-                fullResponseForm.style.display = 'block';
-            }
-        });
-
-        eventSource.addEventListener('end', () => {
-            console.log('Streaming completed!');
-            loader.style.display = 'none'; // Hide the loader
-            submitButton.disabled = false; // Enable the button
-            submitButton.innerText = 'Suggest Something Else';
-
-            // Extract City from the full response
-            city = fullResponseText.split(',')[0].trim();
-            console.log('Extracted City:', city);
-
-            if (city) {
-                previousSuggestions.push(city);
-                sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
-                searchFlightsButton.style.display = 'block';
-            }
-
-            eventSource.close();
-        });
-
-        eventSource.addEventListener('error', (e) => {
-            console.error('SSE Error:', e);
-            alert('Error fetching suggestions.');
-            loader.style.display = 'none';
-            submitButton.disabled = false;
-            submitButton.innerText = 'Get Suggestion';
-            eventSource.close();
-        });
-    };
-
-    /**
-     * Fallback for SSE using fetch and manual parsing
-     * @param {Response} response 
-     */
-    const handleSSEFallback = async (response) => {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
-        let fullResponseText = '';
-
-        try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -202,11 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (line.startsWith('event: ')) {
                             event = line.replace('event: ', '').trim();
                         } else if (line.startsWith('data: ')) {
-                            data = JSON.parse(line.replace('data: ', '').trim());
+                            try {
+                                data = JSON.parse(line.replace('data: ', '').trim());
+                            } catch (e) {
+                                console.error('Failed to parse JSON:', e);
+                                continue;
+                            }
                         }
                     }
 
-                    if (event === 'full_response' && data.full_response) {
+                    if (event === 'full_response' && data?.full_response) {
                         fullResponseText += data.full_response;
                         fullResponseTextarea.value = fullResponseText; // Overwrite to prevent duplication
                         fullResponseForm.style.display = 'block'; // Show the full response form
@@ -220,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         submitButton.disabled = false; // Enable the button
 
                         // After streaming is complete, extract City
-                        city = fullResponseText.split(',')[0].trim();
+                        city = fullResponseText.split(',')[0]?.trim() || '';
                         console.log('Extracted City:', city);
 
                         // Add the current city to the previous suggestions list
@@ -238,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         submitButton.innerText = 'Suggest Something Else';
                     }
 
-                    if (event === 'error' && data.error) {
+                    if (event === 'error' && data?.error) {
                         console.error('Error from backend:', data.error);
                         alert('Error fetching suggestions: ' + data.error);
                         loader.style.display = 'none'; // Hide the loader
@@ -247,26 +175,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-        } catch (error) {
-            console.error('SSE Fallback Error:', error);
-            alert('Error fetching suggestions.');
-            loader.style.display = 'none';
-            submitButton.disabled = false;
-            submitButton.innerText = 'Get Suggestion';
-        }
-    };
 
-    /**
-     * Handle "Search Flights" button click
-     */
-    const handleSearchFlights = () => {
+            // In case the stream ends without an 'end' event
+            if (fullResponseText && !city) {
+                city = fullResponseText.split(',')[0]?.trim() || '';
+                console.log('Extracted City:', city);
+                if (city) {
+                    previousSuggestions.push(city);
+                    sessionStorage.setItem('previousSuggestions', JSON.stringify(previousSuggestions));
+                    searchFlightsButton.style.display = 'block';
+                    submitButton.innerText = 'Suggest Something Else';
+                }
+            }
+
+            loader.style.display = 'none'; // Ensure loader is hidden
+            submitButton.disabled = false; // Ensure button is enabled
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error fetching suggestions. Please try again later.');
+            loader.style.display = 'none'; // Hide the loader
+            submitButton.disabled = false; // Enable the button
+            submitButton.innerText = 'Get Suggestion'; // Revert button text
+        }
+    });
+
+    // This event listener ensures the "Search Flights" button only opens a new tab with the URL.
+    searchFlightsButton.addEventListener('click', () => {
         if (city) {
-            console.log('Opening a new tab with', city);
+            console.log('Opening a new tab with ', city);
             window.open(`https://www.robotize.no/flights?city=${encodeURIComponent(city)}`, '_blank');
         }
-    };
-
-    // Attach event listeners
-    submitButton.addEventListener('click', handleFormSubmit);
-    searchFlightsButton.addEventListener('click', handleSearchFlights);
+    });
 });
