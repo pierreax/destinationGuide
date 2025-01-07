@@ -1,14 +1,30 @@
-/* Define color variables */
+/* Define Modern Color Variables */
 :root {
-    --background-color: #ffcc66; /* Light beige background */
-    --text-color: black;
-    --input-background: #FFDD95;
-    --button-bg: #4CAF50;
-    --button-hover-bg: #45a049;
-    --accent-color: #ffcc66;
-    --border-color: #ddd;
-    --loader-border: #f3f3f3;
-    --loader-bg: #3498db;
+    /* Base Colors */
+    --background-color: #f5f5f5; /* Very Light Gray */
+    --surface-color: #ffffff; /* White */
+    --text-color: #333333; /* Dark Gray for better readability */
+    --input-background: #ffffff; /* White inputs for a clean look */
+    
+    /* Primary Palette */
+    --primary-color: #3498db; /* Modern Blue */
+    --primary-hover: #2980b9; /* Darker Blue on hover */
+    
+    /* Secondary Palette */
+    --secondary-color: #2ecc71; /* Fresh Green */
+    --secondary-hover: #27ae60; /* Darker Green on hover */
+    
+    /* Accent Colors */
+    --accent-color: #e74c3c; /* Vibrant Red for alerts or important actions */
+    
+    /* Neutral Colors */
+    --border-color: #cccccc; /* Light Gray borders */
+    --loader-border: #e0e0e0; /* Light Gray loader border */
+    --loader-bg: #3498db; /* Loader in primary blue */
+    
+    /* Disabled State */
+    --disabled-bg: #dddddd; /* Gray for disabled elements */
+    --disabled-text: #777777; /* Gray text for disabled elements */
 }
 
 /* Fonts */
@@ -50,7 +66,7 @@ form {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background: var(--input-background);
+    background: var(--surface-color);
 }
 
 .form-group-fullresponse {
@@ -67,15 +83,16 @@ input, select, textarea {
     padding: 15px;
     box-sizing: border-box;
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border: 1px solid var(--border-color);
-    background: var(--background-color);
+    background: var(--input-background);
     font-family: 'Avenir Light', sans-serif;
     -webkit-appearance: none;
     appearance: none;
     font-size: 16px;
     resize: none; /* Prevent resizing */
     overflow: hidden; /* Hide scrollbar */
+    color: var(--text-color);
 }
 
 label {
@@ -97,12 +114,12 @@ textarea:focus + label, textarea:not(:placeholder-shown) + label {
     top: 0;
     left: 10px;
     font-size: 12px;
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
 /* Submit button styles */
 button[id="submitButton"] {
-    background-color: var(--button-bg);
+    background-color: var(--primary-color);
     color: white;
     padding: 15px;
     border: none;
@@ -117,19 +134,19 @@ button[id="submitButton"] {
 
 button[id="submitButton"]:hover,
 button[id="submitButton"]:active {
-    background-color: var(--button-hover-bg);
+    background-color: var(--primary-hover);
     transform: translateY(-2px);
 }
 
 button[id="submitButton"]:disabled {
-    background-color: #cccccc;
+    background-color: var(--disabled-bg);
     cursor: not-allowed;
-    color: #666666;
+    color: var(--disabled-text);
 }
 
 /* Search flights button styles */
 button[id="searchFlightsButton"] {
-    background-color: var(--button-bg);
+    background-color: var(--secondary-color);
     color: white;
     padding: 15px;
     border: none;
@@ -145,10 +162,9 @@ button[id="searchFlightsButton"] {
 
 button[id="searchFlightsButton"]:hover,
 button[id="searchFlightsButton"]:active {
-    background-color: var(--button-hover-bg);
+    background-color: var(--secondary-hover);
     transform: translateY(-2px);
 }
-
 
 /* Loader animation styles */
 .loader {
