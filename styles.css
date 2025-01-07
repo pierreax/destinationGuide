@@ -46,7 +46,6 @@ h1, h2 {
     color: var(--text-color);
     margin: 0;
     text-align: center;
-    background-color: var(--accent-color);
     font-weight: normal;
 }
 
