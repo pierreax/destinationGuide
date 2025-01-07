@@ -128,22 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {Response} response 
      */
     const handleSSE = (response) => {
-        const eventSource = new EventSourcePolyfill('/suggest-destination', {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            method: 'POST',
-            body: JSON.stringify({
-                preferences: {
-                    destination_type: form.querySelector('[name="destination_type"]').value,
-                    activity: form.querySelector('[name="activity"]').value,
-                    climate: form.querySelector('[name="climate"]').value,
-                    budget: form.querySelector('[name="budget"]').value,
-                    month: form.querySelector('[name="month"]').value
-                },
-                previousSuggestions: JSON.parse(sessionStorage.getItem('previousSuggestions')) || []
-            })
-        });
+        // Since EventSource doesn't support POST natively, use a workaround or a polyfill
+        // For simplicity, assuming a GET endpoint that returns SSE
+        // If POST is required, consider using fetch with ReadableStream as done in fallback
+        const eventSource = new EventSource('/suggest-destination-sse');
 
         let fullResponseText = '';
 
