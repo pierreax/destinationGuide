@@ -1,30 +1,30 @@
 /* Define Modern Color Variables */
 :root {
     /* Base Colors */
-    --background-color: #f5f5f5; /* Very Light Gray */
-    --surface-color: #ffffff; /* White */
-    --text-color: #333333; /* Dark Gray for better readability */
-    --input-background: #ffffff; /* White inputs for a clean look */
+    --background-color: #F8F9FA; /* Light Gray background */
+    --surface-color: #FFFFFF; /* White surfaces */
+    --text-color: #343A40; /* Dark Slate text */
+    --border-color: #CED4DA; /* Light Gray borders */
     
     /* Primary Palette */
-    --primary-color: #3498db; /* Modern Blue */
-    --primary-hover: #2980b9; /* Darker Blue on hover */
+    --primary-color: #1E90FF; /* Vibrant Blue */
+    --primary-hover: #1C86EE; /* Slightly darker Vibrant Blue for hover */
     
     /* Secondary Palette */
-    --secondary-color: #2ecc71; /* Fresh Green */
-    --secondary-hover: #27ae60; /* Darker Green on hover */
+    --secondary-color: #20C997; /* Soft Teal */
+    --secondary-hover: #17A589; /* Slightly darker Soft Teal for hover */
     
     /* Accent Colors */
-    --accent-color: #e74c3c; /* Vibrant Red for alerts or important actions */
+    --accent-color: #FF5722; /* Bright Orange */
     
-    /* Neutral Colors */
-    --border-color: #cccccc; /* Light Gray borders */
-    --loader-border: #e0e0e0; /* Light Gray loader border */
-    --loader-bg: #3498db; /* Loader in primary blue */
+
+    /* Loader Colors */
+    --loader-border: #E9ECEF; /* Very Light Gray */
+    --loader-bg: var(--primary-color); /* Vibrant Blue */
     
     /* Disabled State */
-    --disabled-bg: #dddddd; /* Gray for disabled elements */
-    --disabled-text: #777777; /* Gray text for disabled elements */
+    --disabled-bg: #CED4DA; /* Gray for disabled elements */
+    --disabled-text: #6C757D; /* Gray text for disabled elements */
 }
 
 /* Fonts */
