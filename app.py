@@ -1,27 +1,25 @@
 import os
 from flask import Flask, render_template, request, jsonify
-from openai import OpenAI
+from anthropic import Anthropic
 
 app = Flask(__name__)
 
-def get_openai_api_key():
-    return os.getenv("OPENAI_API_KEY")
+def get_anthropic_api_key():
+    return os.getenv("ANTHROPIC_API_KEY")
 
 def generate_response(prompt):
-    client = OpenAI(api_key=get_openai_api_key())
-    stream = client.chat.completions.create(
-        model="gpt-4-turbo",
+    client = Anthropic(api_key=get_anthropic_api_key())
+
+    # Use Claude 3.5 Sonnet for high-quality responses
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=1024,
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
-        ],
-        stream=True,
+        ]
     )
-    response = ""
-    for chunk in stream:
-        if chunk.choices[0].delta.content is not None:
-            response += chunk.choices[0].delta.content
-    return response.strip()
+
+    return response.content[0].text.strip()
 
 def extract_city_country_and_response(response):
     lines = response.split('\n', 1)  # Split the response into two parts at the first newline
